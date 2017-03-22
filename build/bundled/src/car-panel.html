@@ -1,0 +1,1932 @@
+<html><head><meta charset="UTF-8"><link rel="import" href="my-app.html"></head><body><div hidden="" by-vulcanize=""><script>Polymer.IronFormElementBehavior={properties:{name:{type:String},value:{notify:!0,type:String},required:{type:Boolean,value:!1},_parentForm:{type:Object}},attached:function(){this.fire("iron-form-element-register")},detached:function(){this._parentForm&&this._parentForm.fire("iron-form-element-unregister",{target:this})}};</script><script>Polymer.IronRangeBehavior={properties:{value:{type:Number,value:0,notify:!0,reflectToAttribute:!0},min:{type:Number,value:0,notify:!0},max:{type:Number,value:100,notify:!0},step:{type:Number,value:1,notify:!0},ratio:{type:Number,value:0,readOnly:!0,notify:!0}},observers:["_update(value, min, max, step)"],_calcRatio:function(t){return(this._clampValue(t)-this.min)/(this.max-this.min)},_clampValue:function(t){return Math.min(this.max,Math.max(this.min,this._calcStep(t)))},_calcStep:function(t){if(t=parseFloat(t),!this.step)return t;var e=Math.round((t-this.min)/this.step);return this.step<1?e/(1/this.step)+this.min:e*this.step+this.min},_validateValue:function(){var t=this._clampValue(this.value);return this.value=this.oldValue=isNaN(t)?this.oldValue:t,this.value!==t},_update:function(){this._validateValue(),this._setRatio(100*this._calcRatio(this.value))}};</script><dom-module id="iron-a11y-announcer" assetpath="../bower_components/iron-a11y-announcer/">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        position: fixed;
+        clip: rect(0px,0px,0px,0px);
+      }
+    </style>
+    <div aria-live$="[[mode]]">[[_text]]</div>
+  </template>
+
+  <script>!function(){"use strict";Polymer.IronA11yAnnouncer=Polymer({is:"iron-a11y-announcer",properties:{mode:{type:String,value:"polite"},_text:{type:String,value:""}},created:function(){Polymer.IronA11yAnnouncer.instance||(Polymer.IronA11yAnnouncer.instance=this),document.body.addEventListener("iron-announce",this._onIronAnnounce.bind(this))},announce:function(n){this._text="",this.async(function(){this._text=n},100)},_onIronAnnounce:function(n){n.detail&&n.detail.text&&this.announce(n.detail.text)}}),Polymer.IronA11yAnnouncer.instance=null,Polymer.IronA11yAnnouncer.requestAvailability=function(){Polymer.IronA11yAnnouncer.instance||(Polymer.IronA11yAnnouncer.instance=document.createElement("iron-a11y-announcer")),document.body.appendChild(Polymer.IronA11yAnnouncer.instance)}}();</script>
+</dom-module>
+<script>Polymer.IronValidatableBehaviorMeta=null,Polymer.IronValidatableBehavior={properties:{validator:{type:String},invalid:{notify:!0,reflectToAttribute:!0,type:Boolean,value:!1},_validatorMeta:{type:Object},validatorType:{type:String,value:"validator"},_validator:{type:Object,computed:"__computeValidator(validator)"}},observers:["_invalidChanged(invalid)"],registered:function(){Polymer.IronValidatableBehaviorMeta=new Polymer.IronMeta({type:"validator"})},_invalidChanged:function(){this.invalid?this.setAttribute("aria-invalid","true"):this.removeAttribute("aria-invalid")},hasValidator:function(){return null!=this._validator},validate:function(a){return this.invalid=!this._getValidity(a),!this.invalid},_getValidity:function(a){return!this.hasValidator()||this._validator.validate(a)},__computeValidator:function(){return Polymer.IronValidatableBehaviorMeta&&Polymer.IronValidatableBehaviorMeta.byKey(this.validator)}};</script><script>Polymer({is:"iron-input",extends:"input",behaviors:[Polymer.IronValidatableBehavior],properties:{bindValue:{observer:"_bindValueChanged",type:String},preventInvalidInput:{type:Boolean},allowedPattern:{type:String,observer:"_allowedPatternChanged"},_previousValidInput:{type:String,value:""},_patternAlreadyChecked:{type:Boolean,value:!1}},listeners:{input:"_onInput",keypress:"_onKeypress"},registered:function(){this._canDispatchEventOnDisabled()||(this._origDispatchEvent=this.dispatchEvent,this.dispatchEvent=this._dispatchEventFirefoxIE)},created:function(){Polymer.IronA11yAnnouncer.requestAvailability()},_canDispatchEventOnDisabled:function(){var e=document.createElement("input"),t=!1;e.disabled=!0,e.addEventListener("feature-check-dispatch-event",function(){t=!0});try{e.dispatchEvent(new Event("feature-check-dispatch-event"))}catch(e){}return t},_dispatchEventFirefoxIE:function(){var e=this.disabled;this.disabled=!1,this._origDispatchEvent.apply(this,arguments),this.disabled=e},get _patternRegExp(){var e;if(this.allowedPattern)e=new RegExp(this.allowedPattern);else switch(this.type){case"number":e=/[0-9.,e-]/}return e},ready:function(){this.bindValue=this.value},_bindValueChanged:function(){this.value!==this.bindValue&&(this.value=this.bindValue||0===this.bindValue||this.bindValue===!1?this.bindValue:""),this.fire("bind-value-changed",{value:this.bindValue})},_allowedPatternChanged:function(){this.preventInvalidInput=!!this.allowedPattern},_onInput:function(){if(this.preventInvalidInput&&!this._patternAlreadyChecked){this._checkPatternValidity()||(this._announceInvalidCharacter("Invalid string of characters not entered."),this.value=this._previousValidInput)}this.bindValue=this.value,this._previousValidInput=this.value,this._patternAlreadyChecked=!1},_isPrintable:function(e){var t=8==e.keyCode||9==e.keyCode||13==e.keyCode||27==e.keyCode,i=19==e.keyCode||20==e.keyCode||45==e.keyCode||46==e.keyCode||144==e.keyCode||145==e.keyCode||e.keyCode>32&&e.keyCode<41||e.keyCode>111&&e.keyCode<124;return!(t||0==e.charCode&&i)},_onKeypress:function(e){if(this.preventInvalidInput||"number"===this.type){var t=this._patternRegExp;if(t&&!(e.metaKey||e.ctrlKey||e.altKey)){this._patternAlreadyChecked=!0;var i=String.fromCharCode(e.charCode);this._isPrintable(e)&&!t.test(i)&&(e.preventDefault(),this._announceInvalidCharacter("Invalid character "+i+" not entered."))}}},_checkPatternValidity:function(){var e=this._patternRegExp;if(!e)return!0;for(var t=0;t<this.value.length;t++)if(!e.test(this.value[t]))return!1;return!0},validate:function(){var e=this.checkValidity();return e&&(this.required&&""===this.value?e=!1:this.hasValidator()&&(e=Polymer.IronValidatableBehavior.validate.call(this,this.value))),this.invalid=!e,this.fire("iron-input-validate"),e},_announceInvalidCharacter:function(e){this.fire("iron-announce",{text:e})}});</script><script>Polymer.PaperInputHelper={},Polymer.PaperInputHelper.NextLabelID=1,Polymer.PaperInputHelper.NextAddonID=1,Polymer.PaperInputBehaviorImpl={properties:{label:{type:String},value:{notify:!0,type:String},disabled:{type:Boolean,value:!1},invalid:{type:Boolean,value:!1,notify:!0},preventInvalidInput:{type:Boolean},allowedPattern:{type:String},type:{type:String},list:{type:String},pattern:{type:String},required:{type:Boolean,value:!1},errorMessage:{type:String},charCounter:{type:Boolean,value:!1},noLabelFloat:{type:Boolean,value:!1},alwaysFloatLabel:{type:Boolean,value:!1},autoValidate:{type:Boolean,value:!1},validator:{type:String},autocomplete:{type:String,value:"off"},autofocus:{type:Boolean,observer:"_autofocusChanged"},inputmode:{type:String},minlength:{type:Number},maxlength:{type:Number},min:{type:String},max:{type:String},step:{type:String},name:{type:String},placeholder:{type:String,value:""},readonly:{type:Boolean,value:!1},size:{type:Number},autocapitalize:{type:String,value:"none"},autocorrect:{type:String,value:"off"},autosave:{type:String},results:{type:Number},accept:{type:String},multiple:{type:Boolean},_ariaDescribedBy:{type:String,value:""},_ariaLabelledBy:{type:String,value:""}},listeners:{"addon-attached":"_onAddonAttached"},keyBindings:{"shift+tab:keydown":"_onShiftTabDown"},hostAttributes:{tabindex:0},get inputElement(){return this.$.input},get _focusableElement(){return this.inputElement},registered:function(){this._typesThatHaveText=["date","datetime","datetime-local","month","time","week","file"]},attached:function(){this._updateAriaLabelledBy(),this.inputElement&&this._typesThatHaveText.indexOf(this.inputElement.type)!==-1&&(this.alwaysFloatLabel=!0)},_appendStringWithSpace:function(e,t){return e=e?e+" "+t:t},_onAddonAttached:function(e){var t=e.path?e.path[0]:e.target;if(t.id)this._ariaDescribedBy=this._appendStringWithSpace(this._ariaDescribedBy,t.id);else{var a="paper-input-add-on-"+Polymer.PaperInputHelper.NextAddonID++;t.id=a,this._ariaDescribedBy=this._appendStringWithSpace(this._ariaDescribedBy,a)}},validate:function(){return this.inputElement.validate()},_focusBlurHandler:function(e){Polymer.IronControlState._focusBlurHandler.call(this,e),this.focused&&!this._shiftTabPressed&&this._focusableElement.focus()},_onShiftTabDown:function(e){var t=this.getAttribute("tabindex");this._shiftTabPressed=!0,this.setAttribute("tabindex","-1"),this.async(function(){this.setAttribute("tabindex",t),this._shiftTabPressed=!1},1)},_handleAutoValidate:function(){this.autoValidate&&this.validate()},updateValueAndPreserveCaret:function(e){try{var t=this.inputElement.selectionStart;this.value=e,this.inputElement.selectionStart=t,this.inputElement.selectionEnd=t}catch(t){this.value=e}},_computeAlwaysFloatLabel:function(e,t){return t||e},_updateAriaLabelledBy:function(){var e=Polymer.dom(this.root).querySelector("label");if(!e)return void(this._ariaLabelledBy="");var t;e.id?t=e.id:(t="paper-input-label-"+Polymer.PaperInputHelper.NextLabelID++,e.id=t),this._ariaLabelledBy=t},_onChange:function(e){this.shadowRoot&&this.fire(e.type,{sourceEvent:e},{node:this,bubbles:e.bubbles,cancelable:e.cancelable})},_autofocusChanged:function(){if(this.autofocus&&this._focusableElement){var e=document.activeElement;e instanceof HTMLElement&&e!==document.body&&e!==document.documentElement||this._focusableElement.focus()}}},Polymer.PaperInputBehavior=[Polymer.IronControlState,Polymer.IronA11yKeysBehavior,Polymer.PaperInputBehaviorImpl];</script><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,500,500italic,700,700italic">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700">
+<style is="custom-style">
+
+  :root {
+
+    /* Shared Styles */
+    --paper-font-common-base: {
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    };
+
+    --paper-font-common-code: {
+      font-family: 'Roboto Mono', 'Consolas', 'Menlo', monospace;
+      -webkit-font-smoothing: antialiased;
+    };
+
+    --paper-font-common-expensive-kerning: {
+      text-rendering: optimizeLegibility;
+    };
+
+    --paper-font-common-nowrap: {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    };
+
+    /* Material Font Styles */
+
+    --paper-font-display4: {
+      @apply(--paper-font-common-base);
+      @apply(--paper-font-common-nowrap);
+
+      font-size: 112px;
+      font-weight: 300;
+      letter-spacing: -.044em;
+      line-height: 120px;
+    };
+
+    --paper-font-display3: {
+      @apply(--paper-font-common-base);
+      @apply(--paper-font-common-nowrap);
+
+      font-size: 56px;
+      font-weight: 400;
+      letter-spacing: -.026em;
+      line-height: 60px;
+    };
+
+    --paper-font-display2: {
+      @apply(--paper-font-common-base);
+
+      font-size: 45px;
+      font-weight: 400;
+      letter-spacing: -.018em;
+      line-height: 48px;
+    };
+
+    --paper-font-display1: {
+      @apply(--paper-font-common-base);
+
+      font-size: 34px;
+      font-weight: 400;
+      letter-spacing: -.01em;
+      line-height: 40px;
+    };
+
+    --paper-font-headline: {
+      @apply(--paper-font-common-base);
+
+      font-size: 24px;
+      font-weight: 400;
+      letter-spacing: -.012em;
+      line-height: 32px;
+    };
+
+    --paper-font-title: {
+      @apply(--paper-font-common-base);
+      @apply(--paper-font-common-nowrap);
+
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 28px;
+    };
+
+    --paper-font-subhead: {
+      @apply(--paper-font-common-base);
+
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+    };
+
+    --paper-font-body2: {
+      @apply(--paper-font-common-base);
+
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 24px;
+    };
+
+    --paper-font-body1: {
+      @apply(--paper-font-common-base);
+
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+    };
+
+    --paper-font-caption: {
+      @apply(--paper-font-common-base);
+      @apply(--paper-font-common-nowrap);
+
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.011em;
+      line-height: 20px;
+    };
+
+    --paper-font-menu: {
+      @apply(--paper-font-common-base);
+      @apply(--paper-font-common-nowrap);
+
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 24px;
+    };
+
+    --paper-font-button: {
+      @apply(--paper-font-common-base);
+      @apply(--paper-font-common-nowrap);
+
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.018em;
+      line-height: 24px;
+      text-transform: uppercase;
+    };
+
+    --paper-font-code2: {
+      @apply(--paper-font-common-code);
+
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+    };
+
+    --paper-font-code1: {
+      @apply(--paper-font-common-code);
+
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+    };
+
+  }
+
+</style><script>Polymer.PaperInputAddonBehavior={hostAttributes:{"add-on":""},attached:function(){this.fire("addon-attached")},update:function(t){}};</script><dom-module id="paper-input-char-counter" assetpath="../bower_components/paper-input/">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        float: right;
+
+        @apply(--paper-font-caption);
+        @apply(--paper-input-char-counter);
+      }
+
+      :host([hidden]) {
+        display: none !important;
+      }
+
+      :host-context([dir="rtl"]) {
+        float: left;
+      }
+    </style>
+
+    <span>[[_charCounterStr]]</span>
+  </template>
+</dom-module>
+
+<script>Polymer({is:"paper-input-char-counter",behaviors:[Polymer.PaperInputAddonBehavior],properties:{_charCounterStr:{type:String,value:"0"}},update:function(t){if(t.inputElement){t.value=t.value||"";var e=t.value.toString().length.toString();t.inputElement.hasAttribute("maxlength")&&(e+="/"+t.inputElement.getAttribute("maxlength")),this._charCounterStr=e}}});</script>
+<dom-module id="paper-input-container" assetpath="../bower_components/paper-input/">
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 8px 0;
+
+        @apply(--paper-input-container);
+      }
+
+      :host([inline]) {
+        display: inline-block;
+      }
+
+      :host([disabled]) {
+        pointer-events: none;
+        opacity: 0.33;
+
+        @apply(--paper-input-container-disabled);
+      }
+
+      :host([hidden]) {
+        display: none !important;
+      }
+
+      .floated-label-placeholder {
+        @apply(--paper-font-caption);
+      }
+
+      .underline {
+        height: 2px;
+        position: relative;
+      }
+
+      .focused-line {
+        @apply(--layout-fit);
+
+        border-bottom: 2px solid var(--paper-input-container-focus-color, --primary-color);
+
+        -webkit-transform-origin: center center;
+        transform-origin: center center;
+        -webkit-transform: scale3d(0,1,1);
+        transform: scale3d(0,1,1);
+
+        @apply(--paper-input-container-underline-focus);
+      }
+
+      .underline.is-highlighted .focused-line {
+        -webkit-transform: none;
+        transform: none;
+        -webkit-transition: -webkit-transform 0.25s;
+        transition: transform 0.25s;
+
+        @apply(--paper-transition-easing);
+      }
+
+      .underline.is-invalid .focused-line {
+        border-color: var(--paper-input-container-invalid-color, --error-color);
+        -webkit-transform: none;
+        transform: none;
+        -webkit-transition: -webkit-transform 0.25s;
+        transition: transform 0.25s;
+
+        @apply(--paper-transition-easing);
+      }
+
+      .unfocused-line {
+        @apply(--layout-fit);
+
+        border-bottom: 1px solid var(--paper-input-container-color, --secondary-text-color);
+
+        @apply(--paper-input-container-underline);
+      }
+
+      :host([disabled]) .unfocused-line {
+        border-bottom: 1px dashed;
+        border-color: var(--paper-input-container-color, --secondary-text-color);
+
+        @apply(--paper-input-container-underline-disabled);
+      }
+
+      .label-and-input-container {
+        @apply(--layout-flex-auto);
+        @apply(--layout-relative);
+
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .input-content {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+
+        position: relative;
+      }
+
+      .input-content ::content label,
+      .input-content ::content .paper-input-label {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        font: inherit;
+        color: var(--paper-input-container-color, --secondary-text-color);
+        -webkit-transition: -webkit-transform 0.25s, width 0.25s;
+        transition: transform 0.25s, width 0.25s;
+        -webkit-transform-origin: left top;
+        transform-origin: left top;
+
+        @apply(--paper-font-common-nowrap);
+        @apply(--paper-font-subhead);
+        @apply(--paper-input-container-label);
+        @apply(--paper-transition-easing);
+      }
+
+      .input-content.label-is-floating ::content label,
+      .input-content.label-is-floating ::content .paper-input-label {
+        -webkit-transform: translateY(-75%) scale(0.75);
+        transform: translateY(-75%) scale(0.75);
+
+        /* Since we scale to 75/100 of the size, we actually have 100/75 of the
+        original space now available */
+        width: 133%;
+
+        @apply(--paper-input-container-label-floating);
+      }
+
+      :host-context([dir="rtl"]) .input-content.label-is-floating ::content label,
+      :host-context([dir="rtl"]) .input-content.label-is-floating ::content .paper-input-label {
+        /* TODO(noms): Figure out why leaving the width at 133% before the animation
+         * actually makes
+         * it wider on the right side, not left side, as you would expect in RTL */
+        width: 100%;
+        -webkit-transform-origin: right top;
+        transform-origin: right top;
+      }
+
+      .input-content.label-is-highlighted ::content label,
+      .input-content.label-is-highlighted ::content .paper-input-label {
+        color: var(--paper-input-container-focus-color, --primary-color);
+
+        @apply(--paper-input-container-label-focus);
+      }
+
+      .input-content.is-invalid ::content label,
+      .input-content.is-invalid ::content .paper-input-label {
+        color: var(--paper-input-container-invalid-color, --error-color);
+      }
+
+      .input-content.label-is-hidden ::content label,
+      .input-content.label-is-hidden ::content .paper-input-label {
+        visibility: hidden;
+      }
+
+      .input-content ::content input,
+      .input-content ::content textarea,
+      .input-content ::content iron-autogrow-textarea,
+      .input-content ::content .paper-input-input {
+        position: relative; /* to make a stacking context */
+        outline: none;
+        box-shadow: none;
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+        background: transparent;
+        border: none;
+        color: var(--paper-input-container-input-color, --primary-text-color);
+        -webkit-appearance: none;
+        text-align: inherit;
+        vertical-align: bottom;
+
+        @apply(--paper-font-subhead);
+        @apply(--paper-input-container-input);
+      }
+
+      .input-content ::content input::-webkit-outer-spin-button,
+      .input-content ::content input::-webkit-inner-spin-button {
+        @apply(--paper-input-container-input-webkit-spinner);
+      }
+
+      ::content [prefix] {
+        @apply(--paper-font-subhead);
+
+        @apply(--paper-input-prefix);
+        @apply(--layout-flex-none);
+      }
+
+      ::content [suffix] {
+        @apply(--paper-font-subhead);
+
+        @apply(--paper-input-suffix);
+        @apply(--layout-flex-none);
+      }
+
+      /* Firefox sets a min-width on the input, which can cause layout issues */
+      .input-content ::content input {
+        min-width: 0;
+      }
+
+      .input-content ::content textarea {
+        resize: none;
+      }
+
+      .add-on-content {
+        position: relative;
+      }
+
+      .add-on-content.is-invalid ::content * {
+        color: var(--paper-input-container-invalid-color, --error-color);
+      }
+
+      .add-on-content.is-highlighted ::content * {
+        color: var(--paper-input-container-focus-color, --primary-color);
+      }
+    </style>
+
+    <template is="dom-if" if="[[!noLabelFloat]]">
+      <div class="floated-label-placeholder" aria-hidden="true">&nbsp;</div>
+    </template>
+
+    <div class$="[[_computeInputContentClass(noLabelFloat,alwaysFloatLabel,focused,invalid,_inputHasContent)]]">
+      <content select="[prefix]" id="prefix"></content>
+
+      <div class="label-and-input-container" id="labelAndInputContainer">
+        <content select=":not([add-on]):not([prefix]):not([suffix])"></content>
+      </div>
+
+      <content select="[suffix]"></content>
+    </div>
+
+    <div class$="[[_computeUnderlineClass(focused,invalid)]]">
+      <div class="unfocused-line"></div>
+      <div class="focused-line"></div>
+    </div>
+
+    <div class$="[[_computeAddOnContentClass(focused,invalid)]]">
+      <content id="addOnContent" select="[add-on]"></content>
+    </div>
+  </template>
+</dom-module>
+
+<script>Polymer({is:"paper-input-container",properties:{noLabelFloat:{type:Boolean,value:!1},alwaysFloatLabel:{type:Boolean,value:!1},attrForValue:{type:String,value:"bind-value"},autoValidate:{type:Boolean,value:!1},invalid:{observer:"_invalidChanged",type:Boolean,value:!1},focused:{readOnly:!0,type:Boolean,value:!1,notify:!0},_addons:{type:Array},_inputHasContent:{type:Boolean,value:!1},_inputSelector:{type:String,value:"input,textarea,.paper-input-input"},_boundOnFocus:{type:Function,value:function(){return this._onFocus.bind(this)}},_boundOnBlur:{type:Function,value:function(){return this._onBlur.bind(this)}},_boundOnInput:{type:Function,value:function(){return this._onInput.bind(this)}},_boundValueChanged:{type:Function,value:function(){return this._onValueChanged.bind(this)}}},listeners:{"addon-attached":"_onAddonAttached","iron-input-validate":"_onIronInputValidate"},get _valueChangedEvent(){return this.attrForValue+"-changed"},get _propertyForValue(){return Polymer.CaseMap.dashToCamelCase(this.attrForValue)},get _inputElement(){return Polymer.dom(this).querySelector(this._inputSelector)},get _inputElementValue(){return this._inputElement[this._propertyForValue]||this._inputElement.value},ready:function(){this._addons||(this._addons=[]),this.addEventListener("focus",this._boundOnFocus,!0),this.addEventListener("blur",this._boundOnBlur,!0)},attached:function(){this.attrForValue?this._inputElement.addEventListener(this._valueChangedEvent,this._boundValueChanged):this.addEventListener("input",this._onInput),""!=this._inputElementValue?this._handleValueAndAutoValidate(this._inputElement):this._handleValue(this._inputElement)},_onAddonAttached:function(t){this._addons||(this._addons=[]);var n=t.target;this._addons.indexOf(n)===-1&&(this._addons.push(n),this.isAttached&&this._handleValue(this._inputElement))},_onFocus:function(){this._setFocused(!0)},_onBlur:function(){this._setFocused(!1),this._handleValueAndAutoValidate(this._inputElement)},_onInput:function(t){this._handleValueAndAutoValidate(t.target)},_onValueChanged:function(t){this._handleValueAndAutoValidate(t.target)},_handleValue:function(t){var n=this._inputElementValue;n||0===n||"number"===t.type&&!t.checkValidity()?this._inputHasContent=!0:this._inputHasContent=!1,this.updateAddons({inputElement:t,value:n,invalid:this.invalid})},_handleValueAndAutoValidate:function(t){if(this.autoValidate){var n;n=t.validate?t.validate(this._inputElementValue):t.checkValidity(),this.invalid=!n}this._handleValue(t)},_onIronInputValidate:function(t){this.invalid=this._inputElement.invalid},_invalidChanged:function(){this._addons&&this.updateAddons({invalid:this.invalid})},updateAddons:function(t){for(var n,e=0;n=this._addons[e];e++)n.update(t)},_computeInputContentClass:function(t,n,e,i,a){var u="input-content";if(t)a&&(u+=" label-is-hidden");else{var o=this.querySelector("label");n||a?(u+=" label-is-floating",this.$.labelAndInputContainer.style.position="static",i?u+=" is-invalid":e&&(u+=" label-is-highlighted")):o&&(this.$.labelAndInputContainer.style.position="relative")}return u},_computeUnderlineClass:function(t,n){var e="underline";return n?e+=" is-invalid":t&&(e+=" is-highlighted"),e},_computeAddOnContentClass:function(t,n){var e="add-on-content";return n?e+=" is-invalid":t&&(e+=" is-highlighted"),e}});</script>
+<dom-module id="paper-input-error" assetpath="../bower_components/paper-input/">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        visibility: hidden;
+
+        color: var(--paper-input-container-invalid-color, --error-color);
+
+        @apply(--paper-font-caption);
+        @apply(--paper-input-error);
+        position: absolute;
+        left:0;
+        right:0;
+      }
+
+      :host([invalid]) {
+        visibility: visible;
+      };
+    </style>
+
+    <content></content>
+  </template>
+</dom-module>
+
+<script>Polymer({is:"paper-input-error",behaviors:[Polymer.PaperInputAddonBehavior],properties:{invalid:{readOnly:!0,reflectToAttribute:!0,type:Boolean}},update:function(e){this._setInvalid(e.invalid)}});</script>
+<dom-module id="paper-input" assetpath="../bower_components/paper-input/">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+
+      :host([focused]) {
+        outline: none;
+      }
+
+      :host([hidden]) {
+        display: none !important;
+      }
+
+      input::-webkit-input-placeholder {
+        color: var(--paper-input-container-color, --secondary-text-color);
+      }
+
+      input:-moz-placeholder {
+        color: var(--paper-input-container-color, --secondary-text-color);
+      }
+
+      input::-moz-placeholder {
+        color: var(--paper-input-container-color, --secondary-text-color);
+      }
+
+      input:-ms-input-placeholder {
+        color: var(--paper-input-container-color, --secondary-text-color);
+      }
+
+      label {
+        pointer-events: none;
+      }
+    </style>
+
+    <paper-input-container no-label-float="[[noLabelFloat]]" always-float-label="[[_computeAlwaysFloatLabel(alwaysFloatLabel,placeholder)]]" auto-validate$="[[autoValidate]]" disabled$="[[disabled]]" invalid="[[invalid]]">
+
+      <content select="[prefix]"></content>
+
+      <label hidden$="[[!label]]" aria-hidden="true" for="input">[[label]]</label>
+
+      <input is="iron-input" id="input" aria-labelledby$="[[_ariaLabelledBy]]" aria-describedby$="[[_ariaDescribedBy]]" disabled$="[[disabled]]" title$="[[title]]" bind-value="{{value}}" invalid="{{invalid}}" prevent-invalid-input="[[preventInvalidInput]]" allowed-pattern="[[allowedPattern]]" validator="[[validator]]" type$="[[type]]" pattern$="[[pattern]]" required$="[[required]]" autocomplete$="[[autocomplete]]" autofocus$="[[autofocus]]" inputmode$="[[inputmode]]" minlength$="[[minlength]]" maxlength$="[[maxlength]]" min$="[[min]]" max$="[[max]]" step$="[[step]]" name$="[[name]]" placeholder$="[[placeholder]]" readonly$="[[readonly]]" list$="[[list]]" size$="[[size]]" autocapitalize$="[[autocapitalize]]" autocorrect$="[[autocorrect]]" on-change="_onChange" tabindex$="[[tabindex]]" autosave$="[[autosave]]" results$="[[results]]" accept$="[[accept]]" multiple$="[[multiple]]">
+
+      <content select="[suffix]"></content>
+
+      <template is="dom-if" if="[[errorMessage]]">
+        <paper-input-error aria-live="assertive">[[errorMessage]]</paper-input-error>
+      </template>
+
+      <template is="dom-if" if="[[charCounter]]">
+        <paper-input-char-counter></paper-input-char-counter>
+      </template>
+
+    </paper-input-container>
+  </template>
+</dom-module>
+
+<script>Polymer({is:"paper-input",behaviors:[Polymer.IronFormElementBehavior,Polymer.PaperInputBehavior]});</script>
+<dom-module id="paper-progress" assetpath="../bower_components/paper-progress/">
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 200px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      :host([hidden]) {
+        display: none !important;
+      }
+
+      #progressContainer {
+        @apply(--paper-progress-container);
+        position: relative;
+      }
+
+      #progressContainer,
+      /* the stripe for the indeterminate animation*/
+      .indeterminate::after {
+        height: var(--paper-progress-height, 4px);
+      }
+
+      #primaryProgress,
+      #secondaryProgress,
+      .indeterminate::after {
+        @apply(--layout-fit);
+      }
+
+      #progressContainer,
+      .indeterminate::after {
+        background: var(--paper-progress-container-color, --google-grey-300);
+      }
+
+      :host(.transiting) #primaryProgress,
+      :host(.transiting) #secondaryProgress {
+        -webkit-transition-property: -webkit-transform;
+        transition-property: transform;
+
+        /* Duration */
+        -webkit-transition-duration: var(--paper-progress-transition-duration, 0.08s);
+        transition-duration: var(--paper-progress-transition-duration, 0.08s);
+
+        /* Timing function */
+        -webkit-transition-timing-function: var(--paper-progress-transition-timing-function, ease);
+        transition-timing-function: var(--paper-progress-transition-timing-function, ease);
+
+        /* Delay */
+        -webkit-transition-delay: var(--paper-progress-transition-delay, 0s);
+        transition-delay: var(--paper-progress-transition-delay, 0s);
+      }
+
+      #primaryProgress,
+      #secondaryProgress {
+        @apply(--layout-fit);
+        -webkit-transform-origin: left center;
+        transform-origin: left center;
+        -webkit-transform: scaleX(0);
+        transform: scaleX(0);
+        will-change: transform;
+      }
+
+      #primaryProgress {
+        background: var(--paper-progress-active-color, --google-green-500);
+      }
+
+      #secondaryProgress {
+        background: var(--paper-progress-secondary-color, --google-green-100);
+      }
+
+      :host([disabled]) #primaryProgress {
+        background: var(--paper-progress-disabled-active-color, --google-grey-500);
+      }
+
+      :host([disabled]) #secondaryProgress {
+        background: var(--paper-progress-disabled-secondary-color, --google-grey-300);
+      }
+
+      :host(:not([disabled])) #primaryProgress.indeterminate {
+        -webkit-transform-origin: right center;
+        transform-origin: right center;
+        -webkit-animation: indeterminate-bar var(--paper-progress-indeterminate-cycle-duration, 2s) linear infinite;
+        animation: indeterminate-bar var(--paper-progress-indeterminate-cycle-duration, 2s) linear infinite;
+      }
+
+      :host(:not([disabled])) #primaryProgress.indeterminate::after {
+        content: "";
+        -webkit-transform-origin: center center;
+        transform-origin: center center;
+
+        -webkit-animation: indeterminate-splitter var(--paper-progress-indeterminate-cycle-duration, 2s) linear infinite;
+        animation: indeterminate-splitter var(--paper-progress-indeterminate-cycle-duration, 2s) linear infinite;
+      }
+
+      @-webkit-keyframes indeterminate-bar {
+        0% {
+          -webkit-transform: scaleX(1) translateX(-100%);
+        }
+        50% {
+          -webkit-transform: scaleX(1) translateX(0%);
+        }
+        75% {
+          -webkit-transform: scaleX(1) translateX(0%);
+          -webkit-animation-timing-function: cubic-bezier(.28,.62,.37,.91);
+        }
+        100% {
+          -webkit-transform: scaleX(0) translateX(0%);
+        }
+      }
+
+      @-webkit-keyframes indeterminate-splitter {
+        0% {
+          -webkit-transform: scaleX(.75) translateX(-125%);
+        }
+        30% {
+          -webkit-transform: scaleX(.75) translateX(-125%);
+          -webkit-animation-timing-function: cubic-bezier(.42,0,.6,.8);
+        }
+        90% {
+          -webkit-transform: scaleX(.75) translateX(125%);
+        }
+        100% {
+          -webkit-transform: scaleX(.75) translateX(125%);
+        }
+      }
+
+      @keyframes indeterminate-bar {
+        0% {
+          transform: scaleX(1) translateX(-100%);
+        }
+        50% {
+          transform: scaleX(1) translateX(0%);
+        }
+        75% {
+          transform: scaleX(1) translateX(0%);
+          animation-timing-function: cubic-bezier(.28,.62,.37,.91);
+        }
+        100% {
+          transform: scaleX(0) translateX(0%);
+        }
+      }
+
+      @keyframes indeterminate-splitter {
+        0% {
+          transform: scaleX(.75) translateX(-125%);
+        }
+        30% {
+          transform: scaleX(.75) translateX(-125%);
+          animation-timing-function: cubic-bezier(.42,0,.6,.8);
+        }
+        90% {
+          transform: scaleX(.75) translateX(125%);
+        }
+        100% {
+          transform: scaleX(.75) translateX(125%);
+        }
+      }
+    </style>
+
+    <div id="progressContainer">
+      <div id="secondaryProgress" hidden$="[[_hideSecondaryProgress(secondaryRatio)]]"></div>
+      <div id="primaryProgress"></div>
+    </div>
+  </template>
+</dom-module>
+
+<script>Polymer({is:"paper-progress",behaviors:[Polymer.IronRangeBehavior],properties:{secondaryProgress:{type:Number,value:0},secondaryRatio:{type:Number,value:0,readOnly:!0},indeterminate:{type:Boolean,value:!1,observer:"_toggleIndeterminate"},disabled:{type:Boolean,value:!1,reflectToAttribute:!0,observer:"_disabledChanged"}},observers:["_progressChanged(secondaryProgress, value, min, max)"],hostAttributes:{role:"progressbar"},_toggleIndeterminate:function(e){this.toggleClass("indeterminate",e,this.$.primaryProgress)},_transformProgress:function(e,r){var s="scaleX("+r/100+")";e.style.transform=e.style.webkitTransform=s},_mainRatioChanged:function(e){this._transformProgress(this.$.primaryProgress,e)},_progressChanged:function(e,r,s,t){e=this._clampValue(e),r=this._clampValue(r);var a=100*this._calcRatio(e),i=100*this._calcRatio(r);this._setSecondaryRatio(a),this._transformProgress(this.$.secondaryProgress,a),this._transformProgress(this.$.primaryProgress,i),this.secondaryProgress=e,this.setAttribute("aria-valuenow",r),this.setAttribute("aria-valuemin",s),this.setAttribute("aria-valuemax",t)},_disabledChanged:function(e){this.setAttribute("aria-disabled",e?"true":"false")},_hideSecondaryProgress:function(e){return 0===e}});</script>
+<dom-module id="paper-range-slider" assetpath="../bower_components/paper-range-slider/">
+    <template>
+        <style>
+            /* local styles go here */
+            :host {
+              --paper-range-slider-width: 200px;
+              /*width: var(--paper-range-slider-width);*/
+              /*display: inline-block;*/
+
+              @apply(--layout);
+              @apply(--layout-justified);
+              @apply(--layout-center);
+
+              --paper-range-slider-lower-color:             var(--paper-grey-400);
+              --paper-range-slider-active-color:            var(--primary-color);
+              --paper-range-slider-higher-color:            var(--paper-grey-400);
+              --paper-range-slider-knob-color:              var(--primary-color);
+              --paper-range-slider-pin-color:               var(--primary-color);
+              --paper-range-slider-pin-start-color:         var(--paper-grey-400);
+              --paper-range-slider-knob-start-color:        transparent;
+              --paper-range-slider-knob-start-border-color: var(--paper-grey-400);
+            }
+
+            #sliderOuterDiv_0 {
+              display: inline-block;
+              width: var(--paper-range-slider-width);
+            }
+
+            #sliderOuterDiv_1 {
+              position: relative;
+              height: calc(30px + var(--paper-single-range-slider-height, 2px));
+              margin-left: 0;
+              margin-right: 0;
+              margin-top: 0;
+              margin-bottom: 0;
+            }
+
+            /* mimic the size of the #sliderKnob of paper-single-range-slider */
+            .sliderKnobMinMax {
+              position: absolute;
+              left: 0;
+              top: 0;
+              margin-left: calc(-15px - var(--paper-single-range-slider-height, 2px)/2);
+              width: calc(30px + var(--paper-single-range-slider-height, 2px));
+              height: calc(30px + var(--paper-single-range-slider-height, 2px));
+              /*background: #2196F3; opacity: 0.3;*/
+            }
+
+            .divSpanWidth {
+                position:absolute;
+                width:100%;
+                display:block;
+                top:0px;
+            }
+
+            #sliderMax {
+                line-height: normal;
+                --paper-single-range-slider-bar-color:               transparent;
+                --paper-single-range-slider-knob-color:              var(--paper-range-slider-knob-color);
+                --paper-single-range-slider-pin-color:               var(--paper-range-slider-pin-color);
+                --paper-single-range-slider-active-color:            var(--paper-range-slider-active-color);
+                --paper-single-range-slider-secondary-color:         var(--paper-range-slider-higher-color);
+                --paper-single-range-slider-pin-start-color:         var(--paper-range-slider-pin-start-color);
+                --paper-single-range-slider-knob-start-color:        var(--paper-range-slider-knob-start-color);
+                --paper-single-range-slider-knob-start-border-color: var(--paper-range-slider-knob-start-border-color);
+            }
+            #sliderMin {
+                line-height: normal;
+                --paper-single-range-slider-active-color:            var(--paper-range-slider-lower-color);
+                --paper-single-range-slider-secondary-color:         transparent;
+                --paper-single-range-slider-knob-color:              var(--paper-range-slider-knob-color);
+                --paper-single-range-slider-pin-color:               var(--paper-range-slider-pin-color);
+                --paper-single-range-slider-pin-start-color:         var(--paper-range-slider-pin-start-color);
+                --paper-single-range-slider-knob-start-color:        var(--paper-range-slider-knob-start-color);
+                --paper-single-range-slider-knob-start-border-color: var(--paper-range-slider-knob-start-border-color);
+            }
+        </style>
+
+        <div id="sliderOuterDiv_0" style="[[style]]">
+            <div id="sliderOuterDiv_1">
+                
+              <div id="backDiv" class="divSpanWidth" on-down="_backDivDown" on-tap="_backDivTap" on-up="_backDivUp" on-track="_backDivOnTrack" on-transitionend="_backDivTransEnd">
+                   
+                  
+                  <div id="backDivInner_0" style="line-height:200%"><br></div>
+              </div>
+
+              
+              <div id="sliderKnobMin" class="sliderKnobMinMax" on-down="_backDivDown" on-up="_backDivUp" on-track="_sliderKnobMinOnTrack"></div>
+              <div id="sliderKnobMax" class="sliderKnobMinMax" on-down="_backDivDown" on-up="_backDivUp" on-track="_sliderKnobMaxOnTrack"></div>
+
+              <div class="divSpanWidth" style="pointer-events: none">
+                <paper-single-range-slider id="sliderMax" disabled$="[[disabled]]" on-down="_sliderMaxDown" on-up="_sliderMaxUp" step="[[step]]" min="[[min]]" max="[[max]]" value="[[valueMax]]" secondary-progress="[[max]]" style="width:100%">
+                </paper-single-range-slider>
+              </div>
+
+              <div class="divSpanWidth" style="pointer-events: none">
+                <paper-single-range-slider id="sliderMin" disabled$="[[disabled]]" on-down="_sliderMinDown" on-up="_sliderMinUp" noink="" step="[[step]]" min="[[min]]" max="[[max]]" value="[[valueMin]]" style="width:100%">
+                </paper-single-range-slider>
+              </div>
+
+              
+              <div id="backDivInner_1" style="line-height:100%"><br></div>
+            </div>
+        </div>
+    </template>
+
+    <script>Polymer({is:"paper-range-slider",behaviors:[Polymer.IronRangeBehavior],properties:{sliderWidth:{type:String,value:"",notify:!0,reflectToAttribute:!0},style:{type:String,value:"",notify:!0,reflectToAttribute:!0},min:{type:Number,value:0,notify:!0,reflectToAttribute:!0},max:{type:Number,value:100,notify:!0,reflectToAttribute:!0},valueMin:{type:Number,value:0,notify:!0,reflectToAttribute:!0},valueMax:{type:Number,value:100,notify:!0,reflectToAttribute:!0},step:{type:Number,value:1,notify:!0,reflectToAttribute:!0},valueDiffMin:{type:Number,value:0,notify:!0,reflectToAttribute:!0},valueDiffMax:{type:Number,value:0,notify:!0,reflectToAttribute:!0},alwaysShowPin:{type:Boolean,value:!1,notify:!0},pin:{type:Boolean,value:!1,notify:!0},snaps:{type:Boolean,value:!1,notify:!0},disabled:{type:Boolean,value:!1,notify:!0},singleSlider:{type:Boolean,value:!1,notify:!0},transDuration:{type:Number,value:250},tapValueExtend:{type:Boolean,value:!0,notify:!0},tapValueReduce:{type:Boolean,value:!1,notify:!0},tapValueMove:{type:Boolean,value:!1,notify:!0}},ready:function(){function i(i){return void 0!=i&&null!=i}i(this._nInitTries)||(this._nInitTries=0);var t=this.$$("#sliderMax").getEle("#sliderContainer");if(i(t)&&(t=t.offsetWidth>0),i(t)&&(t=this.$$("#sliderMin").getEle("#sliderContainer")),i(t)&&(t=t.offsetWidth>0),i(t))this._renderedReady();else{if(this._nInitTries<1e3){var e=this;setTimeout(function(){e.ready()},10)}else console.error("could not properly initialize the underlying paper-single-range-slider elements ...");this._nInitTries++}},_renderedReady:function(){this.init(),this._setPadding();var i=this;this.$$("#sliderMin").addEventListener("immediate-value-change",function(t){i._setValueMinMax(i._getValuesMinMax(this.immediateValue,null)),i.$.sliderMin._expandKnob(),i.$.sliderMax._expandKnob()}),this.$$("#sliderMax").addEventListener("immediate-value-change",function(t){i._setValueMinMax(i._getValuesMinMax(null,this.immediateValue))}),this.$$("#sliderMin").addEventListener("change",function(t){i._setValueMinMax(i._getValuesMinMax(this.immediateValue,null)),i.alwaysShowPin&&i.$.sliderMin._expandKnob()}),this.$$("#sliderMax").addEventListener("change",function(t){i._setValueMinMax(i._getValuesMinMax(null,this.immediateValue)),i.alwaysShowPin&&i.$.sliderMax._expandKnob()})},_setPadding:function(){var i=document.createElement("div");i.setAttribute("style","position:absolute; top:0px; opacity:0;"),i.innerHTML="invisibleText",document.body.insertBefore(i,document.body.children[0]);var t=i.offsetHeight/2;this.style.paddingTop=t+"px",this.style.paddingBottom=t+"px",i.parentNode.removeChild(i)},_setValueDiff:function(){this._valueDiffMax=Math.max(this.valueDiffMax,0),this._valueDiffMin=Math.max(this.valueDiffMin,0)},_getValuesMinMax:function(i,t){var e=null!=i&&i>=this.min&&i<=this.max,s=null!=t&&t>=this.min&&t<=this.max;if(!e&&!s)return[this.valueMin,this.valueMax];var n=e?i:this.valueMin,a=s?t:this.valueMax;n=Math.min(Math.max(n,this.min),this.max),a=Math.min(Math.max(a,this.min),this.max);var l=a-n;return e?l<this._valueDiffMin?(a=Math.min(this.max,n+this._valueDiffMin),(l=a-n)<this._valueDiffMin&&(n=a-this._valueDiffMin)):l>this._valueDiffMax&&this._valueDiffMax>0&&(a=n+this._valueDiffMax):l<this._valueDiffMin?(n=Math.max(this.min,a-this._valueDiffMin),(l=a-n)<this._valueDiffMin&&(a=n+this._valueDiffMin)):l>this._valueDiffMax&&this._valueDiffMax>0&&(n=a-this._valueDiffMax),[n,a]},_setValueMin:function(i){i=Math.max(i,this.min),this.$$("#sliderMin").value=i,this.valueMin=i},_setValueMax:function(i){i=Math.min(i,this.max),this.$$("#sliderMax").value=i,this.valueMax=i},_setValueMinMax:function(i){this._setValueMin(i[0]),this._setValueMax(i[1]),this._updateSliderKnobMinMax(),this.updateValues()},_setValues:function(i,t){null!=i&&(i<this.min||i>this.max)&&(i=null),null!=t&&(t<this.min||t>this.max)&&(t=null),null!=i&&null!=t&&(i=Math.min(i,t)),this._setValueMinMax(this._getValuesMinMax(i,t))},_updateSliderKnobMinMax:function(){var i=this.$$("#sliderMax").getEle("#sliderContainer").offsetWidth,t=i*(this.valueMin-this.min)/(this.max-this.min)+.5*this.$$("#sliderKnobMin").offsetWidth,e=i*(this.valueMax-this.min)/(this.max-this.min)+.5*this.$$("#sliderKnobMax").offsetWidth;this.$$("#sliderKnobMin").style.left=t+"px",this.$$("#sliderKnobMax").style.left=e+"px"},_backDivOnTrack:function(i){switch(i.stopPropagation(),i.detail.state){case"start":this._backDivTrackStart(i);break;case"track":this._backDivTrackDuring(i);break;case"end":this._backDivTrackEnd()}},_backDivTrackStart:function(i){},_backDivTrackDuring:function(i){this._x1_Min=this._x0_Min+i.detail.dx;var t=this._calcStep(this._getRatioPos(this.$$("#sliderMin"),this._x1_Min/this._xWidth));this._x1_Max=this._x0_Max+i.detail.dx;var e=this._calcStep(this._getRatioPos(this.$$("#sliderMax"),this._x1_Max/this._xWidth));t>=this.min&&e<=this.max&&this._setValuesWithCurrentDiff(t,e,!1)},_setValuesWithCurrentDiff:function(i,t,e){var s=this._valueDiffMin,n=this._valueDiffMax;this._valueDiffMin=this.valueMax-this.valueMin,this._valueDiffMax=this.valueMax-this.valueMin,e?this.setValues(i,t):this._setValues(i,t),this._valueDiffMin=s,this._valueDiffMax=n},_backDivTrackEnd:function(){},_sliderKnobMinOnTrack:function(i){this._x1_Min=this._x0_Min+i.detail.dx;var t=this._calcStep(this._getRatioPos(this.$$("#sliderMin"),this._x1_Min/this._xWidth));this._setValues(t,null)},_sliderKnobMaxOnTrack:function(i){this._x1_Max=this._x0_Max+i.detail.dx;var t=this._calcStep(this._getRatioPos(this.$$("#sliderMax"),this._x1_Max/this._xWidth));this._setValues(null,t)},_sliderMinDown:function(){this.$$("#sliderMax")._expandKnob()},_sliderMaxDown:function(i){this.singleSlider?this._setValues(null,this._getEventValue(i)):this.$$("#sliderMin")._expandKnob()},_sliderMinUp:function(){this.alwaysShowPin?this.$$("#sliderMin")._expandKnob():this.$$("#sliderMax")._resetKnob()},_sliderMaxUp:function(){this.alwaysShowPin?this.$$("#sliderMax")._expandKnob():(this.$$("#sliderMin")._resetKnob(),this.singleSlider&&this.$$("#sliderMax")._resetKnob())},_getEventValue:function(i){var t=this.$$("#sliderMax").getEle("#sliderContainer").offsetWidth,e=this.$$("#sliderMax").getEle("#sliderContainer").getBoundingClientRect(),s=(i.detail.x-e.left)/t;return this.min+s*(this.max-this.min)},_backDivTap:function(i){this._setValueNow=function(i,t){this.tapValueMove?this._setValuesWithCurrentDiff(i,t,!0):this.setValues(i,t)};var t=this._getEventValue(i);if(t>this.valueMin&&t<this.valueMax){if(this.tapValueReduce){var e=t<this.valueMin+(this.valueMax-this.valueMin)/2;e?this._setValueNow(t,null):this._setValueNow(null,t)}}else(this.tapValueExtend||this.tapValueMove)&&(t<this.valueMin&&this._setValueNow(t,null),t>this.valueMax&&this._setValueNow(null,t))},_backDivDown:function(i){this._sliderMinDown(),this._sliderMaxDown(),this._xWidth=this.$$("#sliderMin").getEle("#sliderBar").offsetWidth,this._x0_Min=this.$$("#sliderMin").ratio*this._xWidth,this._x0_Max=this.$$("#sliderMax").ratio*this._xWidth},_backDivUp:function(){this._sliderMinUp(),this._sliderMaxUp()},_backDivTransEnd:function(i){},_getRatioPos:function(i,t){return Math.max(i.min,Math.min(i.max,(i.max-i.min)*t+i.min))},init:function(){this.setSingleSlider(this.singleSlider),this.setDisabled(this.disabled),this.alwaysShowPin&&(this.pin=!0),this.$$("#sliderMin").pin=this.pin,this.$$("#sliderMax").pin=this.pin,this.$$("#sliderMin").snaps=this.snaps,this.$$("#sliderMax").snaps=this.snaps,""!=this.sliderWidth&&(this.customStyle["--paper-range-slider-width"]=this.sliderWidth,this.updateStyles());var i=this.$$("#sliderMin").getEle("#sliderBar");if(i){var t=i.$$("#progressContainer");t&&(t.style.background="transparent")}this._prevUpdateValues=[this.min,this.max],this._setValueDiff(),this._setValueMinMax(this._getValuesMinMax(this.valueMin,this.valueMax)),this.alwaysShowPin&&(this.$$("#sliderMin")._expandKnob(),this.$$("#sliderMax")._expandKnob())},setValues:function(i,t){this.$$("#sliderMin")._setTransiting(!0),this.$$("#sliderMax")._setTransiting(!0),this._setValues(i,t);var e=this;setTimeout(function(){e.$.sliderMin._setTransiting(!1),e.$.sliderMax._setTransiting(!1)},e.transDuration)},updateValues:function(){this._prevUpdateValues[0]==this.valueMin&&this._prevUpdateValues[1]==this.valueMax||(this._prevUpdateValues=[this.valueMin,this.valueMax],this.async(function(){this.fire("updateValues")}))},setMin:function(i){this.max<i&&(this.max=i),this.min=i,this._prevUpdateValues=[this.min,this.max],this.valueMin<this.min?this._setValues(this.min,null):this._updateSliderKnobMinMax()},setMax:function(i){this.min>i&&(this.min=i),this.max=i,this._prevUpdateValues=[this.min,this.max],this.valueMax>this.max?this._setValues(null,this.max):this._updateSliderKnobMinMax()},setStep:function(i){this.step=i},setValueDiffMin:function(i){this._valueDiffMin=i},setValueDiffMax:function(i){this._valueDiffMax=i},setTapValueExtend:function(i){this.tapValueExtend=i},setTapValueReduce:function(i){this.tapValueReduce=i},setTapValueMove:function(i){this.tapValueMove=i},setDisabled:function(i){this.disabled=i;var t=i?"none":"auto";this.$$("#sliderMax").getEle("#sliderKnob").style.pointerEvents=t,this.$$("#sliderMin").getEle("#sliderKnob").style.pointerEvents=t,this.$$("#sliderOuterDiv_1").style.pointerEvents=t,this.$$("#sliderKnobMin").style.pointerEvents=t,this.$$("#sliderKnobMax").style.pointerEvents=t},setSingleSlider:function(i){this.singleSlider=i,i?(this.$$("#backDiv").style.display="none",this.$$("#sliderMax").style.pointerEvents="auto",this.$$("#sliderMax").style.display="",this.$$("#sliderMin").style.display="none",this.$$("#sliderKnobMin").style.pointerEvents="none",this.$$("#sliderKnobMax").style.pointerEvents="none"):(this.$$("#backDiv").style.display="block",this.$$("#sliderMax").style.pointerEvents="none",this.$$("#sliderMax").style.display="",this.$$("#sliderMin").style.display="",this.$$("#sliderKnobMin").style.pointerEvents="auto",this.$$("#sliderKnobMax").style.pointerEvents="auto"),this.$$("#sliderMax").getEle("#sliderContainer").style.pointerEvents=this.singleSlider?"auto":"none",this.$$("#sliderMin").getEle("#sliderContainer").style.pointerEvents="none"}});</script>
+</dom-module>
+
+
+
+
+<dom-module id="paper-single-range-slider" assetpath="../bower_components/paper-range-slider/">
+  <template strip-whitespace="">
+    <style>
+      :host {
+        @apply(--layout);
+        @apply(--layout-justified);
+        @apply(--layout-center);
+        width: 200px;
+        cursor: default;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        --paper-progress-active-color: var(--paper-single-range-slider-active-color, --google-blue-700);
+        --paper-progress-secondary-color: var(--paper-single-range-slider-secondary-color, --google-blue-300);
+        --paper-progress-disabled-active-color: var(--paper-single-range-slider-disabled-active-color, --paper-grey-400);
+        --paper-progress-disabled-secondary-color: var(--paper-single-range-slider-disabled-secondary-color, --paper-grey-400);
+        --calculated-paper-single-range-slider-height: var(--paper-single-range-slider-height, 2px);
+      }
+
+      /* focus shows the ripple */
+      :host(:focus) {
+        outline: none;
+      }
+
+      #sliderContainer {
+        position: relative;
+        width: 100%;
+        height: calc(30px + var(--calculated-paper-single-range-slider-height));
+        margin-left: calc(15px + var(--calculated-paper-single-range-slider-height)/2);
+        margin-right: calc(15px + var(--calculated-paper-single-range-slider-height)/2);
+      }
+
+      #sliderContainer:focus {
+        outline: 0;
+      }
+
+      #sliderContainer.editable {
+        margin-top: 12px;
+        margin-bottom: 12px;
+      }
+
+      .bar-container {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        overflow: hidden;
+      }
+
+      .ring > .bar-container {
+        left: calc(5px + var(--calculated-paper-single-range-slider-height)/2);
+        transition: left 0.18s ease;
+      }
+
+      .ring.expand.dragging > .bar-container {
+        transition: none;
+      }
+
+      .ring.expand:not(.pin) > .bar-container {
+        left: calc(8px + var(--calculated-paper-single-range-slider-height)/2);
+      }
+
+      #sliderBar {
+        padding: 15px 0;
+        width: 100%;
+        background-color: var(--paper-single-range-slider-bar-color, transparent);
+        --paper-progress-container-color: var(--paper-single-range-slider-container-color, --paper-grey-400);
+        --paper-progress-height: var(--calculated-paper-single-range-slider-height);
+      }
+
+      .slider-markers {
+        position: absolute;
+        top: calc(14px + var(--paper-single-range-slider-height,2px)/2);
+        height: var(--calculated-paper-single-range-slider-height);
+        left: 0;
+        right: -1px;
+        box-sizing: border-box;
+        pointer-events: none;
+        @apply(--layout-horizontal);
+      }
+
+      .slider-marker {
+        @apply(--layout-flex);
+      }
+      .slider-markers::after,
+      .slider-marker::after {
+        content: "";
+        display: block;
+        margin-left: -1px;
+        width: 2px;
+        height: var(--calculated-paper-single-range-slider-height);
+        border-radius: 50%;
+        background-color: var(--paper-single-range-slider-markers-color, #000);
+      }
+
+      .slider-knob {
+        position: absolute;
+        left: 0;
+        top: 0;
+        margin-left: calc(-15px - var(--calculated-paper-single-range-slider-height)/2);
+        width: calc(30px + var(--calculated-paper-single-range-slider-height));
+        height: calc(30px + var(--calculated-paper-single-range-slider-height));
+      }
+
+      .transiting > .slider-knob {
+        transition: left 0.08s ease;
+      }
+
+      .slider-knob:focus {
+        outline: none;
+      }
+
+      .slider-knob.dragging {
+        transition: none;
+      }
+
+      .snaps > .slider-knob.dragging {
+        transition: -webkit-transform 0.08s ease;
+        transition: transform 0.08s ease;
+      }
+
+      .slider-knob-inner {
+        margin: 10px;
+        width: calc(100% - 20px);
+        height: calc(100% - 20px);
+        background-color: var(--paper-single-range-slider-knob-color, --google-blue-700);
+        border: 2px solid var(--paper-single-range-slider-knob-color, --google-blue-700);
+        border-radius: 50%;
+
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+
+        transition-property: -webkit-transform, background-color, border;
+        transition-property: transform, background-color, border;
+        transition-duration: 0.18s;
+        transition-timing-function: ease;
+      }
+
+      .expand:not(.pin) > .slider-knob > .slider-knob-inner {
+        -webkit-transform: scale(1.5);
+        transform: scale(1.5);
+      }
+
+      .ring > .slider-knob > .slider-knob-inner {
+        background-color: var(--paper-single-range-slider-knob-start-color, transparent);
+        border: 2px solid var(--paper-single-range-slider-knob-start-border-color, --paper-grey-400);
+      }
+
+      .slider-knob-inner::before {
+        background-color: var(--paper-single-range-slider-pin-color, --google-blue-700);
+      }
+
+      .pin > .slider-knob > .slider-knob-inner::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        margin-left: -13px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50% 50% 50% 0;
+
+        -webkit-transform: rotate(-45deg) scale(0) translate(0);
+        transform: rotate(-45deg) scale(0) translate(0);
+      }
+
+      .slider-knob-inner::before,
+      .slider-knob-inner::after {
+        transition: -webkit-transform .18s ease, background-color .18s ease;
+        transition: transform .18s ease, background-color .18s ease;
+      }
+
+      .pin.ring > .slider-knob > .slider-knob-inner::before {
+        background-color: var(--paper-single-range-slider-pin-start-color, --paper-grey-400);
+      }
+
+      .pin.expand > .slider-knob > .slider-knob-inner::before {
+        -webkit-transform: rotate(-45deg) scale(1) translate(17px, -17px);
+        transform: rotate(-45deg) scale(1) translate(17px, -17px);
+      }
+
+      .pin > .slider-knob > .slider-knob-inner::after {
+        content: attr(value);
+        position: absolute;
+        top: 0;
+        left: 50%;
+        margin-left: -16px;
+        width: 32px;
+        height: 26px;
+        text-align: center;
+        color: var(--paper-single-range-slider-font-color, #fff);
+        font-size: 10px;
+
+        -webkit-transform: scale(0) translate(0);
+        transform: scale(0) translate(0);
+      }
+
+      .pin.expand > .slider-knob > .slider-knob-inner::after {
+        -webkit-transform: scale(1) translate(0, -17px);
+        transform: scale(1) translate(0, -17px);
+      }
+
+      /* paper-input */
+      .slider-input {
+        width: 50px;
+        overflow: hidden;
+        --paper-input-container-input: {
+          text-align: center;
+        };
+        @apply(--paper-single-range-slider-input);
+      }
+
+      /* disabled state */
+      #sliderContainer.disabled {
+        pointer-events: none;
+      }
+
+      .disabled > .slider-knob > .slider-knob-inner {
+        background-color: var(--paper-single-range-slider-disabled-knob-color, --paper-grey-400);
+        border: 2px solid var(--paper-single-range-slider-disabled-knob-color, --paper-grey-400);
+        -webkit-transform: scale3d(0.75, 0.75, 1);
+        transform: scale3d(0.75, 0.75, 1);
+      }
+
+      .disabled.ring > .slider-knob > .slider-knob-inner {
+        background-color: var(--paper-single-range-slider-knob-start-color, transparent);
+        border: 2px solid var(--paper-single-range-slider-knob-start-border-color, --paper-grey-400);
+      }
+
+      paper-ripple {
+        color: var(--paper-single-range-slider-knob-color, --google-blue-700);
+      }
+    </style>
+
+    <div id="sliderContainer" class$="[[_getClassNames(disabled, pin, snaps, immediateValue, min, expand, dragging, transiting, editable)]]">
+      <div class="bar-container">
+        <paper-progress disabled$="[[disabled]]" id="sliderBar" aria-hidden="true" min="[[min]]" max="[[max]]" step="[[step]]" value="[[immediateValue]]" secondary-progress="[[secondaryProgress]]" on-down="_bardown" on-up="_resetKnob" on-track="_onTrack">
+        </paper-progress>
+      </div>
+
+      <template is="dom-if" if="[[snaps]]">
+        <div class="slider-markers">
+          <template is="dom-repeat" items="[[markers]]">
+            <div class="slider-marker"></div>
+          </template>
+        </div>
+      </template>
+
+      <div id="sliderKnob" class="slider-knob" on-down="_knobdown" on-up="_resetKnob" on-track="_onTrack" on-transitionend="_knobTransitionEnd">
+          <div class="slider-knob-inner" value$="[[immediateValue]]"></div>
+      </div>
+    </div>
+
+    <template is="dom-if" if="[[editable]]">
+      <paper-input id="input" type="number" step="[[step]]" min="[[min]]" max="[[max]]" class="slider-input" disabled$="[[disabled]]" value="[[immediateValue]]" on-change="_changeValue" on-keydown="_inputKeyDown" no-label-float="">
+      </paper-input>
+    </template>
+  </template>
+
+  <script>Polymer({is:"paper-single-range-slider",behaviors:[Polymer.IronA11yKeysBehavior,Polymer.IronFormElementBehavior,Polymer.PaperInkyFocusBehavior,Polymer.IronRangeBehavior],properties:{snaps:{type:Boolean,value:!1,notify:!0},pin:{type:Boolean,value:!1,notify:!0},secondaryProgress:{type:Number,value:0,notify:!0,observer:"_secondaryProgressChanged"},editable:{type:Boolean,value:!1},immediateValue:{type:Number,value:0,readOnly:!0,notify:!0},maxMarkers:{type:Number,value:0,notify:!0},expand:{type:Boolean,value:!1,readOnly:!0},dragging:{type:Boolean,value:!1,readOnly:!0},transiting:{type:Boolean,value:!1,readOnly:!0},markers:{type:Array,readOnly:!0,value:function(){return[]}}},observers:["_updateKnob(value, min, max, snaps, step)","_valueChanged(value)","_immediateValueChanged(immediateValue)","_updateMarkers(maxMarkers, min, max, snaps)"],hostAttributes:{role:"slider",tabindex:0},keyBindings:{"left down pagedown home":"_decrementKey","right up pageup end":"_incrementKey"},increment:function(){this.value=this._clampValue(this.value+this.step)},decrement:function(){this.value=this._clampValue(this.value-this.step)},_updateKnob:function(t,e,i,s,a){this.setAttribute("aria-valuemin",e),this.setAttribute("aria-valuemax",i),this.setAttribute("aria-valuenow",t),this._positionKnob(this._calcRatio(t))},_valueChanged:function(){this.fire("value-change")},_immediateValueChanged:function(){this.dragging?this.fire("immediate-value-change"):this.value=this.immediateValue},_secondaryProgressChanged:function(){this.secondaryProgress=this._clampValue(this.secondaryProgress)},_expandKnob:function(){this._setExpand(!0)},_resetKnob:function(){this.cancelDebouncer("expandKnob"),this._setExpand(!1)},_positionKnob:function(t){this._setImmediateValue(this._calcStep(this._calcKnobPosition(t))),this._setRatio(this._calcRatio(this.immediateValue)),this.$.sliderKnob.style.left=100*this.ratio+"%",this.dragging&&(this._knobstartx=this.ratio*this._w,this.translate3d(0,0,0,this.$.sliderKnob))},_calcKnobPosition:function(t){return(this.max-this.min)*t+this.min},_onTrack:function(t){switch(t.stopPropagation(),t.detail.state){case"start":this._trackStart(t);break;case"track":this._trackX(t);break;case"end":this._trackEnd()}},_trackStart:function(t){this._w=this.$.sliderBar.offsetWidth,this._x=this.ratio*this._w,this._startx=this._x,this._knobstartx=this._startx,this._minx=-this._startx,this._maxx=this._w-this._startx,this.$.sliderKnob.classList.add("dragging"),this._setDragging(!0)},_trackX:function(t){this.dragging||this._trackStart(t);var e=Math.min(this._maxx,Math.max(this._minx,t.detail.dx));this._x=this._startx+e;var i=this._calcStep(this._calcKnobPosition(this._x/this._w));this._setImmediateValue(i);var s=this._calcRatio(this.immediateValue)*this._w-this._knobstartx;this.translate3d(s+"px",0,0,this.$.sliderKnob)},_trackEnd:function(){var t=this.$.sliderKnob.style;this.$.sliderKnob.classList.remove("dragging"),this._setDragging(!1),this._resetKnob(),this.value=this.immediateValue,t.transform=t.webkitTransform="",this.fire("change")},_knobdown:function(t){this._expandKnob(),t.preventDefault(),this.focus()},_bardown:function(t){this._w=this.$.sliderBar.offsetWidth;var e=this.$.sliderBar.getBoundingClientRect(),i=(t.detail.x-e.left)/this._w,s=this.ratio;this._setTransiting(!0),this._positionKnob(i),this.debounce("expandKnob",this._expandKnob,60),s===this.ratio&&this._setTransiting(!1),this.async(function(){this.fire("change")}),t.preventDefault(),this.focus()},_knobTransitionEnd:function(t){t.target===this.$.sliderKnob&&this._setTransiting(!1)},_updateMarkers:function(t,e,i,s){s||this._setMarkers([]);var a=Math.round((i-e)/this.step);a>t&&(a=t),this._setMarkers(new Array(a))},_mergeClasses:function(t){return Object.keys(t).filter(function(e){return t[e]}).join(" ")},_getClassNames:function(){return this._mergeClasses({disabled:this.disabled,pin:this.pin,snaps:this.snaps,ring:this.immediateValue<=this.min,expand:this.expand,dragging:this.dragging,transiting:this.transiting,editable:this.editable})},_incrementKey:function(t){this.disabled||("end"===t.detail.key?this.value=this.max:this.increment(),this.fire("change"),t.preventDefault())},_decrementKey:function(t){this.disabled||("home"===t.detail.key?this.value=this.min:this.decrement(),this.fire("change"),t.preventDefault())},_changeValue:function(t){this.value=t.target.value,this.fire("change")},_inputKeyDown:function(t){t.stopPropagation()},_createRipple:function(){return this._rippleContainer=this.$.sliderKnob,Polymer.PaperInkyFocusBehaviorImpl._createRipple.call(this)},_focusedChanged:function(t){t&&this.ensureRipple(),this.hasRipple()&&(this._ripple.style.display=t?"":"none",this._ripple.holdDown=t)},getEle:function(t){return this.$$(t)}});</script>
+</dom-module><script>Polymer.IronCheckedElementBehaviorImpl={properties:{checked:{type:Boolean,value:!1,reflectToAttribute:!0,notify:!0,observer:"_checkedChanged"},toggles:{type:Boolean,value:!0,reflectToAttribute:!0},value:{type:String,value:"on",observer:"_valueChanged"}},observers:["_requiredChanged(required)"],created:function(){this._hasIronCheckedElementBehavior=!0},_getValidity:function(e){return this.disabled||!this.required||this.checked},_requiredChanged:function(){this.required?this.setAttribute("aria-required","true"):this.removeAttribute("aria-required")},_checkedChanged:function(){this.active=this.checked,this.fire("iron-change")},_valueChanged:function(){void 0!==this.value&&null!==this.value||(this.value="on")}},Polymer.IronCheckedElementBehavior=[Polymer.IronFormElementBehavior,Polymer.IronValidatableBehavior,Polymer.IronCheckedElementBehaviorImpl];</script><script>Polymer.PaperCheckedElementBehaviorImpl={_checkedChanged:function(){Polymer.IronCheckedElementBehaviorImpl._checkedChanged.call(this),this.hasRipple()&&(this.checked?this._ripple.setAttribute("checked",""):this._ripple.removeAttribute("checked"))},_buttonStateChanged:function(){Polymer.PaperRippleBehavior._buttonStateChanged.call(this),this.disabled||this.isAttached&&(this.checked=this.active)}},Polymer.PaperCheckedElementBehavior=[Polymer.PaperInkyFocusBehavior,Polymer.IronCheckedElementBehavior,Polymer.PaperCheckedElementBehaviorImpl];</script><dom-module id="paper-toggle-button" assetpath="../bower_components/paper-toggle-button/">
+  <template strip-whitespace="">
+
+    <style>
+      :host {
+        display: inline-block;
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        @apply(--paper-font-common-base);
+      }
+
+      :host([disabled]) {
+        pointer-events: none;
+      }
+
+      :host(:focus) {
+        outline:none;
+      }
+
+      .toggle-bar {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        border-radius: 8px;
+        pointer-events: none;
+        opacity: 0.4;
+        transition: background-color linear .08s;
+        background-color: var(--paper-toggle-button-unchecked-bar-color, #000000);
+
+        @apply(--paper-toggle-button-unchecked-bar);
+      }
+
+      .toggle-button {
+        position: absolute;
+        top: -3px;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.6);
+        transition: -webkit-transform linear .08s, background-color linear .08s;
+        transition: transform linear .08s, background-color linear .08s;
+        will-change: transform;
+        background-color: var(--paper-toggle-button-unchecked-button-color, --paper-grey-50);
+
+        @apply(--paper-toggle-button-unchecked-button);
+      }
+
+      .toggle-button.dragging {
+        -webkit-transition: none;
+        transition: none;
+      }
+
+      :host([checked]:not([disabled])) .toggle-bar {
+        opacity: 0.5;
+        background-color: var(--paper-toggle-button-checked-bar-color, --primary-color);
+
+        @apply(--paper-toggle-button-checked-bar);
+      }
+
+      :host([disabled]) .toggle-bar {
+        background-color: #000;
+        opacity: 0.12;
+      }
+
+      :host([checked]) .toggle-button {
+        -webkit-transform: translate(16px, 0);
+        transform: translate(16px, 0);
+      }
+
+      :host([checked]:not([disabled])) .toggle-button {
+        background-color: var(--paper-toggle-button-checked-button-color, --primary-color);
+
+        @apply(--paper-toggle-button-checked-button);
+      }
+
+      :host([disabled]) .toggle-button {
+        background-color: #bdbdbd;
+        opacity: 1;
+      }
+
+      .toggle-ink {
+        position: absolute;
+        top: -14px;
+        left: -14px;
+        right: auto;
+        bottom: auto;
+        width: 48px;
+        height: 48px;
+        opacity: 0.5;
+        pointer-events: none;
+        color: var(--paper-toggle-button-unchecked-ink-color, --primary-text-color);
+
+        @apply(--paper-toggle-button-unchecked-ink);
+      }
+
+      :host([checked]) .toggle-ink {
+        color: var(--paper-toggle-button-checked-ink-color, --primary-color);
+
+        @apply(--paper-toggle-button-checked-ink);
+      }
+
+      .toggle-container {
+        display: inline-block;
+        position: relative;
+        width: 36px;
+        height: 14px;
+        /* The toggle button has an absolute position of -3px; The extra 1px
+        /* accounts for the toggle button shadow box. */
+        margin: 4px 1px;
+      }
+
+      .toggle-label {
+        position: relative;
+        display: inline-block;
+        vertical-align: middle;
+        padding-left: var(--paper-toggle-button-label-spacing, 8px);
+        pointer-events: none;
+        color: var(--paper-toggle-button-label-color, --primary-text-color);
+      }
+
+      /* invalid state */
+      :host([invalid]) .toggle-bar {
+        background-color: var(--paper-toggle-button-invalid-bar-color, --error-color);
+      }
+
+      :host([invalid]) .toggle-button {
+        background-color: var(--paper-toggle-button-invalid-button-color, --error-color);
+      }
+
+      :host([invalid]) .toggle-ink {
+        color: var(--paper-toggle-button-invalid-ink-color, --error-color);
+      }
+    </style>
+
+    <div class="toggle-container">
+      <div id="toggleBar" class="toggle-bar"></div>
+      <div id="toggleButton" class="toggle-button"></div>
+    </div>
+
+    <div class="toggle-label"><content></content></div>
+
+  </template>
+
+  <script>Polymer({is:"paper-toggle-button",behaviors:[Polymer.PaperCheckedElementBehavior],hostAttributes:{role:"button","aria-pressed":"false",tabindex:0},properties:{},listeners:{track:"_ontrack"},attached:function(){Polymer.RenderStatus.afterNextRender(this,function(){this.setScrollDirection("y")})},_ontrack:function(t){var e=t.detail;"start"===e.state?this._trackStart(e):"track"===e.state?this._trackMove(e):"end"===e.state&&this._trackEnd(e)},_trackStart:function(t){this._width=this.$.toggleBar.offsetWidth/2,this._trackChecked=this.checked,this.$.toggleButton.classList.add("dragging")},_trackMove:function(t){var e=t.dx;this._x=Math.min(this._width,Math.max(0,this._trackChecked?this._width+e:e)),this.translate3d(this._x+"px",0,0,this.$.toggleButton),this._userActivate(this._x>this._width/2)},_trackEnd:function(t){this.$.toggleButton.classList.remove("dragging"),this.transform("",this.$.toggleButton)},_createRipple:function(){this._rippleContainer=this.$.toggleButton;var t=Polymer.PaperRippleBehavior._createRipple();return t.id="ink",t.setAttribute("recenters",""),t.classList.add("circle","toggle-ink"),t}});</script>
+</dom-module>
+<dom-module id="shared-styles" assetpath="./">
+  <template>
+    <style>
+      .card {
+        margin: 24px;
+        padding: 16px;
+        color: #757575;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+      }
+
+      .circle {
+        display: inline-block;
+        width: 64px;
+        height: 64px;
+        text-align: center;
+        color: #555;
+        border-radius: 50%;
+        background: #ddd;
+        font-size: 30px;
+        line-height: 64px;
+      }
+
+      h1 {
+        margin: 16px 0;
+        color: #212121;
+        font-size: 22px;
+      }
+      .flex {
+        display: flex;
+      }
+      kbd
+      {
+          -moz-border-radius:3px;
+          -moz-box-shadow:0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          -webkit-border-radius:3px;
+          -webkit-box-shadow:0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          background-color:#f7f7f7;
+          border:1px solid #ccc;
+          border-radius:3px;
+          box-shadow:0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          color:#333;
+          display:inline-block;
+          font-family:Arial,Helvetica,sans-serif;
+          font-size:11px;
+          line-height:1.4;
+          margin:0 .1em;
+          padding:.1em .6em;
+          text-shadow:0 1px 0 #fff;
+      }
+
+    </style>
+  </template>
+</dom-module>
+<dom-module id="car-gauge" assetpath="./">
+  
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 10px;
+      }
+    </style>
+    <svg id="svg"></svg>
+  </template>
+
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+      function dToR(angleDeg) {
+        return angleDeg * (Math.PI / 180)
+      }
+
+      function needlePathCalc() {   
+        function pathCalc(d,i) {
+            let nAngleRad = dToR(d + 135)
+            let needlePathStart = -20, needleLength = 120
+
+            let y1 = 150 + (needlePathStart * Math.sin(nAngleRad)),
+                y2 = 150 + ((needlePathStart + needleLength) * Math.sin(nAngleRad)),
+                x1 = 150 + (needlePathStart * Math.cos(nAngleRad)),
+                x2 = 150 + ((needlePathStart + needleLength) * Math.cos(nAngleRad)),
+                
+                lineData = [{'x': x1, 'y': y1}, {'x': x2, 'y': y2}]
+            
+            let lineFunc=d3.line()
+                .x(function(d) {return d.x})
+                .y(function(d) {return d.y})
+            
+            let lineSVG = lineFunc(lineData)
+            return lineSVG 
+        }
+        return pathCalc
+      }
+      function tickCalcMaj(length) {  
+        function pathCalc(d,i) {
+
+            let originX = 150, originY = 150, tickRadius = 135 - length, tickLength = length
+            //Offset the tick mark angle so zero is vertically down, then convert to radians
+            let tickAngle = d + 135,
+                tickAngleRad = dToR(tickAngle)
+
+            let y1 = originY + (tickRadius * Math.sin(tickAngleRad)),
+                y2 = originY + ((tickRadius + tickLength) * Math.sin(tickAngleRad)),
+                x1 = originX + (tickRadius * Math.cos(tickAngleRad)),
+                x2 = originX + ((tickRadius + tickLength) * Math.cos(tickAngleRad)),
+                
+                lineData = [{'x': x1, 'y': y1}, {'x': x2, 'y': y2}]
+
+            let lineFunc = d3.line()
+                .x(function(d) {return d.x})
+                .y(function(d) {return d.y})
+
+            let lineSVG = lineFunc(lineData)
+
+            return lineSVG
+        }
+        return pathCalc
+    }
+
+    function labelXcalc(d, i, str){
+        str = str.toString() || ''
+        let tickAngle = d + 135,
+            tickAngleRad = dToR(tickAngle),
+            labelW = 1 / (str.toString().length / 2)
+            x1 = 150 + ((100 - labelW) * Math.cos(tickAngleRad))
+        return x1
+    }
+    function labelYcalc(d,i){
+        let tickAngle = d + 135,
+            tickAngleRad = dToR(tickAngle),
+            y1 = 150 + (100 * Math.sin(tickAngleRad)) + 10
+        return y1
+    } 
+    Polymer({
+      is: 'car-gauge',
+      properties: {
+        min: {
+          type: Number,
+          value: 0,
+        },
+        max: {
+          type: Number,
+          value: 100,
+        },
+        value: {
+          type: Number,
+          value: 0,
+          observer: 'updateGauge'
+        },
+        angle: {
+          type: Number,
+          value: 270
+        }, 
+        majorTickCount: {
+          type: Number,
+          value: 10
+        },
+        minorTickCount: {
+          type: Number,
+          value: 4
+        },
+        unit: {
+          type: String,
+          value: ''
+        },
+        tickLabels: Array,
+        digitalView: {
+          type: String,
+          computed: '_computeDigitalView(value, unit)'
+        },
+        oldValue: {
+          type: Number,
+          value: 0
+        }
+      },
+      ready: function () {
+        this._drawGauge()
+      },
+      _computeDigitalView: function(value, unit) {
+        return (value === 0 ? '0' : value.toFixed(1)) + unit
+      },
+      _createElements: function() {
+        let width = 300,
+            height = 300,
+            radius = 150
+
+        this.arc = d3.arc()
+                .outerRadius(240)
+                .innerRadius(230)
+
+        this.svg = d3.select(this.$.svg)
+                     .attr('width', width)
+                     .attr('height', height)
+
+        this.valueScale = d3.scaleLinear()
+                           .domain([this.min, this.max])
+                           .range([135, 135 + this.angle])
+      },
+      _drawGauge: function() {
+        this._createElements()
+
+        let circleGroup = this.svg.append('svg:g')
+            .attr('id','circles')
+
+        let outerC = circleGroup.append('svg:circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 150 - 5)
+            .style('fill', 'none')
+            .style('stroke', 'red')
+            .style('stroke-width', '3')
+
+        let innerC = circleGroup.append('svg:circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 150 - 10)
+            .style('fill', 'rgb(52,52,56)')
+            .style('stroke', 'gray')
+            .style('stroke-width', '3')
+
+        let ticks = this.svg.append('svg:g')
+            .attr('id', 'ticks')
+
+        let majorTicks = ticks.append('svg:g')
+            .attr('id', 'majorTicks')
+
+        let minorTicks = ticks.append('svg:g')
+            .attr('id', 'minorTicks')
+
+        let majorTickAngles = []
+        let angleStep = this.angle / this.majorTickCount
+        for(let i = 0; i <= this.angle; i += angleStep) {
+          majorTickAngles.push(i)
+        }
+
+        majorTicks.selectAll('path')
+            .data(majorTickAngles)
+            .enter().append('path')
+            .attr('d', tickCalcMaj(20))
+            .style('stroke', 'red')
+            .style('stroke-width', '3px')
+
+        let minorTickAngles = []
+        angleStep = angleStep / (this.minorTickCount + 1)
+        
+        let j = -1
+        for (let i = 0; i <= this.angle; i+= angleStep) {
+          j++
+          if (j % (this.minorTickCount + 1) === 0) continue
+          minorTickAngles.push(i)
+        }
+        
+        minorTicks.selectAll('path')
+            .data(minorTickAngles)
+            .enter().append('path')
+            .attr('d', tickCalcMaj(10))
+            .style('stroke', 'red')
+            .style('stroke-width', '1px')
+
+        let tickLabels = this.svg.append('svg:g')
+        tickLabels.selectAll('text')
+            .data(majorTickAngles)
+            .enter().append('text')
+            .attr('x', (d, i) => labelXcalc(d,i, this.tickLabels[i]))
+            .attr('y', (d, i) => labelYcalc(d,i))
+            .attr('text-anchor', 'middle')
+            .style('fill', 'white')
+            .text((d, i) => this.tickLabels[i])
+        
+        let unitLabels = this.svg.append('svg:g')
+                            .attr('id', 'unitLabels')
+        unitLabels.selectAll('text')
+            .data([0])
+            .enter().append('text')
+            .attr('x', (d, i) => 150 - (this.digitalView.length / 2) * 8)
+            .attr('y', (d, i) => labelYcalc(d, i))
+            .style('fill', 'white')
+            .style('font-weight', '100')
+            .text(() => this.digitalView)
+
+        // draw needle at last
+        let needleGroup = this.svg.append('svg:g')
+            .attr('id', 'needle')
+
+        let needle = needleGroup.selectAll('path')
+            .data([0])
+            .enter().append('path')
+            .attr('d', needlePathCalc())
+            .style('stroke', 'red')
+            .style('stroke-width', '5px')
+
+        let pivot = needleGroup.append('svg:circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 15)
+            .style('fill', 'gray')
+            .style('stroke', 'none')
+        
+        this.updateGauge = function(newValue, oldValue) {
+          if (newValue == undefined || newValue < this.min) {
+            newValue = this.min
+          }
+          unitLabels.selectAll('text')
+            .text(this.digitalView)
+            .attr('x', (d, i) => 150 - (this.digitalView.length / 2) * 8)
+          
+          needle.transition()
+            .duration(300)
+            .attrTween('transform', (d, i, a) => {
+              let needleAngleOld = this.valueScale(oldValue) - 135
+              let needleAngleNew = this.valueScale(newValue) - 135
+              let needleCentre = 150 + "," + 150
+              return d3.interpolateString("rotate(" + needleAngleOld + "," + needleCentre + ")", "rotate(" + needleAngleNew + "," + needleCentre + ")")
+            })
+        }
+      }
+    })
+  </script>
+  
+</dom-module><dom-module id="gear-view" assetpath="./">
+
+  <template>
+
+    <style>
+      :host {
+        padding: 5px;
+        align-self: flex-end;
+      }
+      .container {
+        width: 50px;
+        height: 55px;
+        border: solid 2px red;
+        border-radius: 3px;
+        font-size: xx-large;
+        text-align: center;
+        line-height: 55px;
+        color: white;
+        background-color: rgb(51,51,51)
+      }
+    </style>
+
+    <div id="gear" class="container">
+      <span>[[gear]]</span>
+    </div>
+  </template>
+  
+  <script>Polymer({is:"gear-view",properties:{gear:{type:Number,value:0}}});</script>
+</dom-module><dom-module id="car-simulator" assetpath="./">
+
+  <script>
+
+    const IDLE_RPM = 1.35
+    const MAX_GEAR = 6
+    const MAX_SPEED = 200
+    const MAX_TORQUE_RPM = 3.3
+    const MAX_RPM = 8.2
+    const MAGICNUMBER_ACC_INTERVAL = 1 / 2400000
+    const MAGICNUMBER_RPM_INTERVAL = .03
+    const ACCELERATION_STEP = .2
+    const DECELERATION_STEP = .05
+    const RPM_RAISE_STEP = .02
+    const RPM_DROP_STEP = .004
+    const AUTO_TRANSMISSION_RANGE = [0, 10, 20, 30, 40, 80]
+
+    function isBetween(num, low, high, inclusive = true) {
+      if (inclusive) {
+        return num <= high && num >= low
+      } else {
+        return num < high && num > low
+      }
+    }
+
+    function calcAccelerationInterval(throttle, gear, speed) {
+      if (gear === 0 || throttle === 0) {
+        return Number.MAX_SAFE_INTEGER
+      }
+      return (MAX_GEAR + 1 - gear) * (MAX_SPEED + 1 - speed) * throttle * MAGICNUMBER_ACC_INTERVAL
+    }
+
+    function calcRPMAccInterval(throttle, gear, rpm) {
+      if (rpm >= MAX_RPM) {
+        return Number.MAX_SAFE_INTEGER
+      }
+      if (throttle === 0){
+        throttle = 1
+      }
+      let k1 = .5, k2 = 1, k3 = 1
+      let result = k1 * throttle * k2 * (gear) * k3 * (rpm) * MAGICNUMBER_RPM_INTERVAL
+      return result
+    }
+
+    Polymer({
+      is: 'car-simulator',
+      properties: {
+        started: {
+          type: Boolean,
+          value: false,
+          observer: '_engineStart'
+        },
+        throttle: {
+          type: Number,
+          value: 50
+        },
+        mode: {
+          type: String,
+          value: 'AT'
+        },
+        speed: {
+          type: Number,
+          value: 0,
+          notify: true,
+          observer: '_autoTransmission'
+        },
+        rpm: {
+          type: Number,
+          value: 0,
+          notify: true
+        },
+        gear: {
+          type: Number,
+          value: 0,
+          notify: true,
+          observer: '_gearChange'
+        },
+        pedalDown: {
+          type: Boolean,
+          value: false
+        }
+      },
+      listeners: {
+        'step-pedal': '_stepPedal',
+        'release-pedal': '_releasePedal',
+        'gear-up': '_gearUp',
+        'gear-down': '_gearDown',
+      },
+      ready: function() {
+        // simulate RPM viberation
+        let lastRPM
+        let flap = false
+        setInterval(() => {
+          if (this.rpm === 0) {
+            clearInterval(this._viberation)
+          }
+          flap = !flap
+          if (flap) {
+            lastRPM = this.rpm
+          } else {
+            if (lastRPM === this.rpm ) {
+              this._simulateViberation()
+            }
+          }
+        }, 200)
+      },
+      _engineStart: function(newValue, oldValue) {
+        clearInterval(this._viberation)
+        if (newValue) {
+          this.rpm = IDLE_RPM
+        } else {
+          if (this.rpm < IDLE_RPM + .1) {
+            this.rpm = 0
+          } else {
+            this._slowlyChange('rpm', 0, 0.08, 10)
+          }
+        }
+      },
+      _stepPedal: function(evt) {
+        if (this.pedalDown || !this.started || this.throttle === 0) {
+          return
+        }
+        this.pedalDown = true
+        if (this.mode === 'AT' && this.gear === 0) {
+          this.gear = 1
+        }
+        clearInterval(this._viberation)
+        this._slowlyChange('speed', 200, ACCELERATION_STEP, calcAccelerationInterval(this.throttle, this.gear, this.speed))
+        this._slowlyChange('rpm', MAX_RPM, RPM_RAISE_STEP, calcRPMAccInterval(this.throttle, this.gear, this.rpm))
+      },
+      _releasePedal: function(evt) {
+        if (!this.started) {
+          return
+        }
+        this.pedalDown = false
+        this._slowlyChange('speed', 0, DECELERATION_STEP, calcAccelerationInterval(this.throttle, this.gear, 200)/400)
+        this._slowlyChange('rpm', IDLE_RPM, RPM_DROP_STEP * this.gear, calcRPMAccInterval(this.throttle, this.gear, this.rpm))
+      },
+      _gearUp: function() {
+        if (this.started && this.mode === 'MT' && this.gear < MAX_GEAR) {
+          this.gear++
+        }
+      },
+      _gearDown: function() {
+        if (this.started && this.mode === 'MT' && this.gear > 0) {
+          this.gear--
+        }
+      },
+      _autoTransmission: function(speed) {
+
+        let offset = (this.throttle - 50) * .1
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[0], AUTO_TRANSMISSION_RANGE[1] + offset)) {
+          this.gear = 1
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[1], AUTO_TRANSMISSION_RANGE[2] + offset)) {
+          this.gear = 2
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[2], AUTO_TRANSMISSION_RANGE[3] + offset)) {
+          this.gear = 3
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[3], AUTO_TRANSMISSION_RANGE[4] + offset)) {
+          this.gear = 4
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[4], AUTO_TRANSMISSION_RANGE[5] + offset)) {
+          this.gear = 5
+        }
+        if (this.speed > AUTO_TRANSMISSION_RANGE[AUTO_TRANSMISSION_RANGE.length - 1]) {
+          this.gear = 6
+        }
+        if (this.speed === 0) {
+          this.gear = 0
+        }
+      },
+      _gearChange: function() {
+        if (this.pedalDown && this.started) {
+          // recalculate acceleration and etc.
+          this._slowlyChange('speed', 200, ACCELERATION_STEP, calcAccelerationInterval(this.throttle, this.gear, this.speed))
+          // simluate RPM burp when switch gear
+          this.rpm -= 0.5 
+          this._slowlyChange('rpm', MAX_RPM, RPM_RAISE_STEP, calcRPMAccInterval(this.throttle, this.gear, this.rpm))
+        }
+      },
+      _simulateViberation: function() {
+        clearInterval(this._viberation)
+        setTimeout(() => this._viberation = setInterval(() => {
+          if (this.started) {
+            let rpm = this.rpm
+            ;(() => { this.rpm = rpm + .03 - Math.random() * .06 })()
+          }
+        }, 100), 500)
+      },
+      _slowlyChange: function(type, to, step, interval) {
+        let intervalKey = '_changing' + type
+        clearInterval(this[intervalKey])
+        if (to == undefined) {
+          return
+        }
+        if (type === 'rpm') {
+          clearInterval(this._viberation)
+        }
+        this[intervalKey] = setInterval(() => {
+          if (to > this[type]) {
+            this[type] += step
+            if (this[type] > to) {
+              this[type] = to
+              clearInterval(this[intervalKey])
+            }
+          } else {
+            this[type] -= step
+            if (this[type] < to) {
+              this[type] = to
+              clearInterval(this[intervalKey])
+            }
+          }
+        }, interval)
+      }
+
+    })
+  </script>
+
+</dom-module></div><dom-module id="car-panel">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+      .flex {
+        justify-content: space-around;
+      }
+      .control > label {
+        line-height: 29px;
+      }
+      .transmission paper-range-slider {
+        width: 65px;
+      }
+      .transmission label:hover {
+        cursor: pointer;
+      }
+      .gauges {
+        margin-bottom: 50px;
+      }
+      .instruction {
+        margin-top: 30px;
+      }
+      .instruction span label{
+        margin-left: 10px;
+        position: relative;
+        top: 2px;
+      }
+    </style>
+
+    <div id="panel" tabindex="0">
+
+      <car-simulator id="simulator" rpm="{{tachometer}}" speed="{{velometer}}" mode="{{mode}}" gear="{{gear}}" started="{{started}}" throttle="{{throttle}}"></car-simulator>
+
+      <div class="card">
+        <div>{{started}}</div>
+        
+        <div class="flex control gauges">
+          <car-gauge value="{{tachometer}}" tick-labels="[0, 1, 2, 3, 4, 5, 6, 7, 8]" unit="x1000rpm" max="9" major-tick-count="8"></car-gauge>
+          <gear-view gear="{{gear}}"></gear-view>
+          <car-gauge value="{{velometer}}" tick-labels="[0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]" unit="mph" max="200" major-tick-count="10"></car-gauge>
+        </div>
+
+        <div class="flex control">
+          <div class="flex control throttle">
+            <paper-toggle-button checked="{{started}}">Engine</paper-toggle-button>
+          </div>
+          <div class="flex control transmission">
+            <label on-tap="_switchTransmission">MT</label>
+            <paper-toggle-button invalid="" checked="{{isAT}}"></paper-toggle-button>
+            <label on-tap="_switchTransmission">AT</label>
+          </div>
+          <div class="flex control throttle">
+            <label>Idle</label>          
+            <paper-range-slider id="throttle" single-slider="" pin="" step="1" min="0" max="100" style="width:300px" value-max="{{throttle}}"></paper-range-slider>
+            <label>Full Throttle</label>
+          </div>
+        </div>
+        <div class="instruction">
+          <div class="flex control">
+            <span>
+              <kbd>Space</kbd><label>Accelerate</label>
+            </span>
+            <span>
+              <kbd>Up</kbd>/<kbd>Down</kbd><label>Switch Gear</label>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'car-panel',
+      properties: {
+        isAT: {
+          type: Boolean,
+          value: true,
+          observer: '_transmissionMode'
+        },
+        mode: {
+          type: String,
+          value: 'AT'
+        },
+        throttle: {
+          type: Number,
+          value: 50
+        },
+        tachometer: {
+          type: Number,
+          value: 0
+        },
+        maxRotateSpeed: {
+          type: Number,
+          value: 9
+        },
+        maxSpeed: {
+          type: Number,
+          value: 200
+        },
+        gear: {
+          type: Number,
+          value: 0
+        }
+      },
+      listeners: {
+        'keyup': '_onKeyUp',
+        'keydown': '_onKeyDown'
+      },
+      ready: function() {
+        setInterval(() => this.$.panel.focus(), 100)
+      },
+      _onKeyDown: function(event) {
+        if (event.code === 'Space') {
+          this.fire('step-pedal', null, { node: this.$.simulator })
+        }
+      },
+      _onKeyUp: function(event) {
+
+        switch (event.code) {
+          case 'ArrowDown':
+            this.fire('gear-down', null, { node: this.$.simulator })
+            break
+          case 'ArrowUp':
+            this.fire('gear-up', null, { node: this.$.simulator })
+            break
+          case 'Space':
+            this.fire('release-pedal', null, { node: this.$.simulator })
+            break
+        }
+      },
+      _switchTransmission: function(event) {
+        this.isAT = event.target.textContent === 'AT' 
+        this.mode = this.isAT ? 'AT' : 'MT'
+        if (!this.isAT) {
+          alert('Not ready')
+        }
+      },
+      _transmissionMode: function(val) {
+        this.mode = val ? 'AT' : 'MT'
+      }
+      
+    });
+  </script>
+</dom-module>
+</body></html>

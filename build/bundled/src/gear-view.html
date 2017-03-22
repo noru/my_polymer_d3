@@ -1,0 +1,29 @@
+<html><head></head><body><dom-module id="gear-view">
+
+  <template>
+
+    <style>
+      :host {
+        padding: 5px;
+        align-self: flex-end;
+      }
+      .container {
+        width: 50px;
+        height: 55px;
+        border: solid 2px red;
+        border-radius: 3px;
+        font-size: xx-large;
+        text-align: center;
+        line-height: 55px;
+        color: white;
+        background-color: rgb(51,51,51)
+      }
+    </style>
+
+    <div id="gear" class="container">
+      <span>[[gear]]</span>
+    </div>
+  </template>
+  
+  <script>Polymer({is:"gear-view",properties:{gear:{type:Number,value:0}}});</script>
+</dom-module></body></html>

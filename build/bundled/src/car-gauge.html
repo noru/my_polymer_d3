@@ -1,0 +1,266 @@
+<html><head></head><body><dom-module id="car-gauge">
+  
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 10px;
+      }
+    </style>
+    <svg id="svg"></svg>
+  </template>
+
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+      function dToR(angleDeg) {
+        return angleDeg * (Math.PI / 180)
+      }
+
+      function needlePathCalc() {   
+        function pathCalc(d,i) {
+            let nAngleRad = dToR(d + 135)
+            let needlePathStart = -20, needleLength = 120
+
+            let y1 = 150 + (needlePathStart * Math.sin(nAngleRad)),
+                y2 = 150 + ((needlePathStart + needleLength) * Math.sin(nAngleRad)),
+                x1 = 150 + (needlePathStart * Math.cos(nAngleRad)),
+                x2 = 150 + ((needlePathStart + needleLength) * Math.cos(nAngleRad)),
+                
+                lineData = [{'x': x1, 'y': y1}, {'x': x2, 'y': y2}]
+            
+            let lineFunc=d3.line()
+                .x(function(d) {return d.x})
+                .y(function(d) {return d.y})
+            
+            let lineSVG = lineFunc(lineData)
+            return lineSVG 
+        }
+        return pathCalc
+      }
+      function tickCalcMaj(length) {  
+        function pathCalc(d,i) {
+
+            let originX = 150, originY = 150, tickRadius = 135 - length, tickLength = length
+            //Offset the tick mark angle so zero is vertically down, then convert to radians
+            let tickAngle = d + 135,
+                tickAngleRad = dToR(tickAngle)
+
+            let y1 = originY + (tickRadius * Math.sin(tickAngleRad)),
+                y2 = originY + ((tickRadius + tickLength) * Math.sin(tickAngleRad)),
+                x1 = originX + (tickRadius * Math.cos(tickAngleRad)),
+                x2 = originX + ((tickRadius + tickLength) * Math.cos(tickAngleRad)),
+                
+                lineData = [{'x': x1, 'y': y1}, {'x': x2, 'y': y2}]
+
+            let lineFunc = d3.line()
+                .x(function(d) {return d.x})
+                .y(function(d) {return d.y})
+
+            let lineSVG = lineFunc(lineData)
+
+            return lineSVG
+        }
+        return pathCalc
+    }
+
+    function labelXcalc(d, i, str){
+        str = str.toString() || ''
+        let tickAngle = d + 135,
+            tickAngleRad = dToR(tickAngle),
+            labelW = 1 / (str.toString().length / 2)
+            x1 = 150 + ((100 - labelW) * Math.cos(tickAngleRad))
+        return x1
+    }
+    function labelYcalc(d,i){
+        let tickAngle = d + 135,
+            tickAngleRad = dToR(tickAngle),
+            y1 = 150 + (100 * Math.sin(tickAngleRad)) + 10
+        return y1
+    } 
+    Polymer({
+      is: 'car-gauge',
+      properties: {
+        min: {
+          type: Number,
+          value: 0,
+        },
+        max: {
+          type: Number,
+          value: 100,
+        },
+        value: {
+          type: Number,
+          value: 0,
+          observer: 'updateGauge'
+        },
+        angle: {
+          type: Number,
+          value: 270
+        }, 
+        majorTickCount: {
+          type: Number,
+          value: 10
+        },
+        minorTickCount: {
+          type: Number,
+          value: 4
+        },
+        unit: {
+          type: String,
+          value: ''
+        },
+        tickLabels: Array,
+        digitalView: {
+          type: String,
+          computed: '_computeDigitalView(value, unit)'
+        },
+        oldValue: {
+          type: Number,
+          value: 0
+        }
+      },
+      ready: function () {
+        this._drawGauge()
+      },
+      _computeDigitalView: function(value, unit) {
+        return (value === 0 ? '0' : value.toFixed(1)) + unit
+      },
+      _createElements: function() {
+        let width = 300,
+            height = 300,
+            radius = 150
+
+        this.arc = d3.arc()
+                .outerRadius(240)
+                .innerRadius(230)
+
+        this.svg = d3.select(this.$.svg)
+                     .attr('width', width)
+                     .attr('height', height)
+
+        this.valueScale = d3.scaleLinear()
+                           .domain([this.min, this.max])
+                           .range([135, 135 + this.angle])
+      },
+      _drawGauge: function() {
+        this._createElements()
+
+        let circleGroup = this.svg.append('svg:g')
+            .attr('id','circles')
+
+        let outerC = circleGroup.append('svg:circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 150 - 5)
+            .style('fill', 'none')
+            .style('stroke', 'red')
+            .style('stroke-width', '3')
+
+        let innerC = circleGroup.append('svg:circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 150 - 10)
+            .style('fill', 'rgb(52,52,56)')
+            .style('stroke', 'gray')
+            .style('stroke-width', '3')
+
+        let ticks = this.svg.append('svg:g')
+            .attr('id', 'ticks')
+
+        let majorTicks = ticks.append('svg:g')
+            .attr('id', 'majorTicks')
+
+        let minorTicks = ticks.append('svg:g')
+            .attr('id', 'minorTicks')
+
+        let majorTickAngles = []
+        let angleStep = this.angle / this.majorTickCount
+        for(let i = 0; i <= this.angle; i += angleStep) {
+          majorTickAngles.push(i)
+        }
+
+        majorTicks.selectAll('path')
+            .data(majorTickAngles)
+            .enter().append('path')
+            .attr('d', tickCalcMaj(20))
+            .style('stroke', 'red')
+            .style('stroke-width', '3px')
+
+        let minorTickAngles = []
+        angleStep = angleStep / (this.minorTickCount + 1)
+        
+        let j = -1
+        for (let i = 0; i <= this.angle; i+= angleStep) {
+          j++
+          if (j % (this.minorTickCount + 1) === 0) continue
+          minorTickAngles.push(i)
+        }
+        
+        minorTicks.selectAll('path')
+            .data(minorTickAngles)
+            .enter().append('path')
+            .attr('d', tickCalcMaj(10))
+            .style('stroke', 'red')
+            .style('stroke-width', '1px')
+
+        let tickLabels = this.svg.append('svg:g')
+        tickLabels.selectAll('text')
+            .data(majorTickAngles)
+            .enter().append('text')
+            .attr('x', (d, i) => labelXcalc(d,i, this.tickLabels[i]))
+            .attr('y', (d, i) => labelYcalc(d,i))
+            .attr('text-anchor', 'middle')
+            .style('fill', 'white')
+            .text((d, i) => this.tickLabels[i])
+        
+        let unitLabels = this.svg.append('svg:g')
+                            .attr('id', 'unitLabels')
+        unitLabels.selectAll('text')
+            .data([0])
+            .enter().append('text')
+            .attr('x', (d, i) => 150 - (this.digitalView.length / 2) * 8)
+            .attr('y', (d, i) => labelYcalc(d, i))
+            .style('fill', 'white')
+            .style('font-weight', '100')
+            .text(() => this.digitalView)
+
+        // draw needle at last
+        let needleGroup = this.svg.append('svg:g')
+            .attr('id', 'needle')
+
+        let needle = needleGroup.selectAll('path')
+            .data([0])
+            .enter().append('path')
+            .attr('d', needlePathCalc())
+            .style('stroke', 'red')
+            .style('stroke-width', '5px')
+
+        let pivot = needleGroup.append('svg:circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 15)
+            .style('fill', 'gray')
+            .style('stroke', 'none')
+        
+        this.updateGauge = function(newValue, oldValue) {
+          if (newValue == undefined || newValue < this.min) {
+            newValue = this.min
+          }
+          unitLabels.selectAll('text')
+            .text(this.digitalView)
+            .attr('x', (d, i) => 150 - (this.digitalView.length / 2) * 8)
+          
+          needle.transition()
+            .duration(300)
+            .attrTween('transform', (d, i, a) => {
+              let needleAngleOld = this.valueScale(oldValue) - 135
+              let needleAngleNew = this.valueScale(newValue) - 135
+              let needleCentre = 150 + "," + 150
+              return d3.interpolateString("rotate(" + needleAngleOld + "," + needleCentre + ")", "rotate(" + needleAngleNew + "," + needleCentre + ")")
+            })
+        }
+      }
+    })
+  </script>
+  
+</dom-module></body></html>
