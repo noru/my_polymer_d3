@@ -1,0 +1,223 @@
+
+
+<dom-module id="car-simulator">
+
+  <script>
+
+    const IDLE_RPM = 1.35
+    const MAX_GEAR = 6
+    const MAX_SPEED = 200
+    const MAX_TORQUE_RPM = 3.3
+    const MAX_RPM = 8.2
+    const MAGICNUMBER_ACC_INTERVAL = 1 / 2400000
+    const MAGICNUMBER_RPM_INTERVAL = .03
+    const ACCELERATION_STEP = .2
+    const DECELERATION_STEP = .05
+    const RPM_RAISE_STEP = .02
+    const RPM_DROP_STEP = .004
+    const AUTO_TRANSMISSION_RANGE = [0, 10, 20, 30, 40, 80]
+
+    function isBetween(num, low, high, inclusive = true) {
+      if (inclusive) {
+        return num <= high && num >= low
+      } else {
+        return num < high && num > low
+      }
+    }
+
+    function calcAccelerationInterval(throttle, gear, speed) {
+      if (gear === 0 || throttle === 0) {
+        return Number.MAX_SAFE_INTEGER
+      }
+      return (MAX_GEAR + 1 - gear) * (MAX_SPEED + 1 - speed) * throttle * MAGICNUMBER_ACC_INTERVAL
+    }
+
+    function calcRPMAccInterval(throttle, gear, rpm) {
+      if (rpm >= MAX_RPM) {
+        return Number.MAX_SAFE_INTEGER
+      }
+      if (throttle === 0){
+        throttle = 1
+      }
+      let k1 = .5, k2 = 1, k3 = 1
+      let result = k1 * throttle * k2 * (gear) * k3 * (rpm) * MAGICNUMBER_RPM_INTERVAL
+      return result
+    }
+
+    Polymer({
+      is: 'car-simulator',
+      properties: {
+        started: {
+          type: Boolean,
+          value: false,
+          observer: '_engineStart'
+        },
+        throttle: {
+          type: Number,
+          value: 50
+        },
+        mode: {
+          type: String,
+          value: 'AT'
+        },
+        speed: {
+          type: Number,
+          value: 0,
+          notify: true,
+          observer: '_autoTransmission'
+        },
+        rpm: {
+          type: Number,
+          value: 0,
+          notify: true
+        },
+        gear: {
+          type: Number,
+          value: 0,
+          notify: true,
+          observer: '_gearChange'
+        },
+        pedalDown: {
+          type: Boolean,
+          value: false
+        }
+      },
+      listeners: {
+        'step-pedal': '_stepPedal',
+        'release-pedal': '_releasePedal',
+        'gear-up': '_gearUp',
+        'gear-down': '_gearDown',
+      },
+      ready: function() {
+        // simulate RPM viberation
+        let lastRPM
+        let flap = false
+        setInterval(() => {
+          if (this.rpm === 0) {
+            clearInterval(this._viberation)
+          }
+          flap = !flap
+          if (flap) {
+            lastRPM = this.rpm
+          } else {
+            if (lastRPM === this.rpm ) {
+              this._simulateViberation()
+            }
+          }
+        }, 200)
+      },
+      _engineStart: function(newValue, oldValue) {
+        clearInterval(this._viberation)
+        if (newValue) {
+          this.rpm = IDLE_RPM
+        } else {
+          if (this.rpm < IDLE_RPM + .1) {
+            this.rpm = 0
+          } else {
+            this._slowlyChange('rpm', 0, 0.08, 10)
+          }
+        }
+      },
+      _stepPedal: function(evt) {
+        if (this.pedalDown || !this.started || this.throttle === 0) {
+          return
+        }
+        this.pedalDown = true
+        if (this.mode === 'AT' && this.gear === 0) {
+          this.gear = 1
+        }
+        clearInterval(this._viberation)
+        this._slowlyChange('speed', 200, ACCELERATION_STEP, calcAccelerationInterval(this.throttle, this.gear, this.speed))
+        this._slowlyChange('rpm', MAX_RPM, RPM_RAISE_STEP, calcRPMAccInterval(this.throttle, this.gear, this.rpm))
+      },
+      _releasePedal: function(evt) {
+        if (!this.started) {
+          return
+        }
+        this.pedalDown = false
+        this._slowlyChange('speed', 0, DECELERATION_STEP, calcAccelerationInterval(this.throttle, this.gear, 200)/400)
+        this._slowlyChange('rpm', IDLE_RPM, RPM_DROP_STEP * this.gear, calcRPMAccInterval(this.throttle, this.gear, this.rpm))
+      },
+      _gearUp: function() {
+        if (this.started && this.mode === 'MT' && this.gear < MAX_GEAR) {
+          this.gear++
+        }
+      },
+      _gearDown: function() {
+        if (this.started && this.mode === 'MT' && this.gear > 0) {
+          this.gear--
+        }
+      },
+      _autoTransmission: function(speed) {
+
+        let offset = (this.throttle - 50) * .1
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[0], AUTO_TRANSMISSION_RANGE[1] + offset)) {
+          this.gear = 1
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[1], AUTO_TRANSMISSION_RANGE[2] + offset)) {
+          this.gear = 2
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[2], AUTO_TRANSMISSION_RANGE[3] + offset)) {
+          this.gear = 3
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[3], AUTO_TRANSMISSION_RANGE[4] + offset)) {
+          this.gear = 4
+        }
+        if (isBetween(speed, AUTO_TRANSMISSION_RANGE[4], AUTO_TRANSMISSION_RANGE[5] + offset)) {
+          this.gear = 5
+        }
+        if (this.speed > AUTO_TRANSMISSION_RANGE[AUTO_TRANSMISSION_RANGE.length - 1]) {
+          this.gear = 6
+        }
+        if (this.speed === 0) {
+          this.gear = 0
+        }
+      },
+      _gearChange: function() {
+        if (this.pedalDown && this.started) {
+          // recalculate acceleration and etc.
+          this._slowlyChange('speed', 200, ACCELERATION_STEP, calcAccelerationInterval(this.throttle, this.gear, this.speed))
+          // simluate RPM burp when switch gear
+          this.rpm -= 0.5 
+          this._slowlyChange('rpm', MAX_RPM, RPM_RAISE_STEP, calcRPMAccInterval(this.throttle, this.gear, this.rpm))
+        }
+      },
+      _simulateViberation: function() {
+        clearInterval(this._viberation)
+        setTimeout(() => this._viberation = setInterval(() => {
+          if (this.started) {
+            let rpm = this.rpm
+            ;(() => { this.rpm = rpm + .03 - Math.random() * .06 })()
+          }
+        }, 100), 500)
+      },
+      _slowlyChange: function(type, to, step, interval) {
+        let intervalKey = '_changing' + type
+        clearInterval(this[intervalKey])
+        if (to == undefined) {
+          return
+        }
+        if (type === 'rpm') {
+          clearInterval(this._viberation)
+        }
+        this[intervalKey] = setInterval(() => {
+          if (to > this[type]) {
+            this[type] += step
+            if (this[type] > to) {
+              this[type] = to
+              clearInterval(this[intervalKey])
+            }
+          } else {
+            this[type] -= step
+            if (this[type] < to) {
+              this[type] = to
+              clearInterval(this[intervalKey])
+            }
+          }
+        }, interval)
+      }
+
+    })
+  </script>
+
+</dom-module>

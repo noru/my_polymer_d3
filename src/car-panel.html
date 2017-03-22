@@ -1,0 +1,186 @@
+
+<link rel="import" href="../bower_components/paper-range-slider/paper-range-slider.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="car-gauge.html">
+<link rel="import" href="gear-view.html">
+<link rel="import" href="car-simulator.html">
+
+
+<dom-module id="car-panel">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+      .flex {
+        justify-content: space-around;
+      }
+      .control > label {
+        line-height: 29px;
+      }
+      .transmission paper-range-slider {
+        width: 65px;
+      }
+      .transmission label:hover {
+        cursor: pointer;
+      }
+      .gauges {
+        margin-bottom: 50px;
+      }
+      .instruction {
+        margin-top: 30px;
+      }
+      .instruction span label{
+        margin-left: 10px;
+        position: relative;
+        top: 2px;
+      }
+    </style>
+
+    <div id="panel" tabindex="0">
+
+      <car-simulator
+        id="simulator"
+        rpm="{{tachometer}}"
+        speed="{{velometer}}"
+        mode="{{mode}}"
+        gear="{{gear}}"
+        started="{{started}}"
+        throttle="{{throttle}}"
+      ></car-simulator>
+
+      <div class="card">
+        <div>{{started}}</div>
+        
+        <div class="flex control gauges">
+          <car-gauge 
+            value="{{tachometer}}"
+            tick-labels="[0, 1, 2, 3, 4, 5, 6, 7, 8]"
+            unit="x1000rpm"
+            max="9"
+            major-tick-count="8"
+          ></car-gauge>
+          <gear-view gear="{{gear}}"></gear-view>
+          <car-gauge 
+            value="{{velometer}}"
+            tick-labels="[0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200]"
+            unit="mph"
+            max="200"
+            major-tick-count="10"
+          ></car-gauge>
+        </div>
+
+        <div class="flex control">
+          <div class="flex control throttle">
+            <paper-toggle-button checked={{started}}>Engine</paper-toggle-button>
+          </div>
+          <div class="flex control transmission">
+            <label on-tap="_switchTransmission">MT</label>
+            <paper-toggle-button invalid checked="{{isAT}}"></paper-toggle-button>
+            <label on-tap="_switchTransmission">AT</label>
+          </div>
+          <div class="flex control throttle">
+            <label>Idle</label>          
+            <paper-range-slider
+              id=throttle
+              single-slider 
+              pin
+              step=1 
+              min=0 
+              max=100 
+              style="width:300px"
+              value-max={{throttle}}
+            ></paper-range-slider>
+            <label>Full Throttle</label>
+          </div>
+        </div>
+        <div class="instruction">
+          <div class="flex control">
+            <span>
+              <kbd>Space</kbd><label>Accelerate</label>
+            </span>
+            <span>
+              <kbd>Up</kbd>/<kbd>Down</kbd><label>Switch Gear</label>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'car-panel',
+      properties: {
+        isAT: {
+          type: Boolean,
+          value: true,
+          observer: '_transmissionMode'
+        },
+        mode: {
+          type: String,
+          value: 'AT'
+        },
+        throttle: {
+          type: Number,
+          value: 50
+        },
+        tachometer: {
+          type: Number,
+          value: 0
+        },
+        maxRotateSpeed: {
+          type: Number,
+          value: 9
+        },
+        maxSpeed: {
+          type: Number,
+          value: 200
+        },
+        gear: {
+          type: Number,
+          value: 0
+        }
+      },
+      listeners: {
+        'keyup': '_onKeyUp',
+        'keydown': '_onKeyDown'
+      },
+      ready: function() {
+        setInterval(() => this.$.panel.focus(), 100)
+      },
+      _onKeyDown: function(event) {
+        if (event.code === 'Space') {
+          this.fire('step-pedal', null, { node: this.$.simulator })
+        }
+      },
+      _onKeyUp: function(event) {
+
+        switch (event.code) {
+          case 'ArrowDown':
+            this.fire('gear-down', null, { node: this.$.simulator })
+            break
+          case 'ArrowUp':
+            this.fire('gear-up', null, { node: this.$.simulator })
+            break
+          case 'Space':
+            this.fire('release-pedal', null, { node: this.$.simulator })
+            break
+        }
+      },
+      _switchTransmission: function(event) {
+        this.isAT = event.target.textContent === 'AT' 
+        this.mode = this.isAT ? 'AT' : 'MT'
+        if (!this.isAT) {
+          alert('Not ready')
+        }
+      },
+      _transmissionMode: function(val) {
+        this.mode = val ? 'AT' : 'MT'
+      }
+      
+    });
+  </script>
+</dom-module>
