@@ -1,5 +1,4 @@
-Visit https://noru.github.io/noru/my_polymer_d3/build/bundled/index.htm
-l
+Visit https://noru.github.io/noru/my_polymer_d3/build/bundled/index.html
 
 or
 
